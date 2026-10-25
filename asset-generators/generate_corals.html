@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Natural Spreading Orange Coral Cluster Generator</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        h2, h3 { margin-bottom: 5px; text-align: center; }
+        .section {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            width: 95%;
+            max-width: 1300px;
+        }
+        .grid {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .card {
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        canvas {
+            background: transparent;
+            border: 1px dashed #475569;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        button {
+            background: linear-gradient(135deg, #ea580c, #c2410c);
+            color: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🪸 Natural Spreading Orange Coral Cluster Generator</h2>
+    <p style="color: #94a3b8; margin-top: 0;">Wide, Sprawling Organic Stalks with Zero Clipping (v1 to v4)</p>
+
+    <div class="section">
+        <h3>Orange Coral Variants (v1 to v4)</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>coral_orange_v1.png</h4>
+                <canvas id="oc_v1" width="340" height="360"></canvas>
+                <button onclick="downloadAsset('oc_v1', 'coral_orange_v1.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>coral_orange_v2.png</h4>
+                <canvas id="oc_v2" width="340" height="360"></canvas>
+                <button onclick="downloadAsset('oc_v2', 'coral_orange_v2.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>coral_orange_v3.png</h4>
+                <canvas id="oc_v3" width="340" height="360"></canvas>
+                <button onclick="downloadAsset('oc_v3', 'coral_orange_v3.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>coral_orange_v4.png</h4>
+                <canvas id="oc_v4" width="340" height="360"></canvas>
+                <button onclick="downloadAsset('oc_v4', 'coral_orange_v4.png')">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function drawNaturalCoralTube(ctx, startX, startY, topX, topY, radius, bendPower) {
+            ctx.save();
+            
+            let mainColor = '#d9531e';
+            let darkShadow = '#94310d';
+            let highlightColor = '#f58245';
+            let rimColor = '#fac898';
+
+            // Natural organic bezier control points for swaying curve
+            let cp1x = startX + bendPower * 0.3;
+            let cp1y = startY - (startY - topY) * 0.5;
+            let cp2x = topX - bendPower * 0.6;
+            let cp2y = topY + (startY - topY) * 0.3;
+
+            // 1. Shaded Backside
+            ctx.fillStyle = darkShadow;
+            ctx.beginPath();
+            ctx.moveTo(startX - radius, startY);
+            ctx.bezierCurveTo(cp1x - radius*0.8, cp1y, cp2x - radius*0.8, cp2y, topX - radius * 0.7, topY);
+            ctx.lineTo(topX + radius * 0.7, topY);
+            ctx.bezierCurveTo(cp2x + radius*0.8, cp2y, cp1x + radius*0.8, cp1y, startX + radius, startY);
+            ctx.closePath();
+            ctx.fill();
+
+            // 2. Main Tube Body
+            ctx.fillStyle = mainColor;
+            ctx.beginPath();
+            ctx.moveTo(startX - radius, startY);
+            ctx.bezierCurveTo(cp1x - radius*0.2, cp1y, cp2x - radius*0.2, cp2y, topX - radius, topY);
+            // Open top ellipse rim
+            ctx.ellipse(topX, topY, radius, radius * 0.45, 0, Math.PI, 0, true);
+            ctx.bezierCurveTo(cp2x + radius*0.2, cp2y, cp1x + radius*0.2, cp1y, startX + radius, startY);
+            ctx.closePath();
+            ctx.fill();
+
+            // 3. Highlight stripe
+            ctx.fillStyle = highlightColor;
+            ctx.beginPath();
+            ctx.moveTo(startX - radius * 0.3, startY);
+            ctx.bezierCurveTo(cp1x - radius*0.1, cp1y, cp2x - radius*0.1, cp2y, topX - radius * 0.2, topY + radius * 0.3);
+            ctx.lineTo(topX + radius * 0.2, topY + radius * 0.3);
+            ctx.bezierCurveTo(cp2x + radius*0.1, cp2y, cp1x + radius*0.1, cp1y, startX + radius * 0.3, startY);
+            ctx.closePath();
+            ctx.fill();
+
+            // 4. Open Rim Opening
+            ctx.fillStyle = rimColor;
+            ctx.beginPath();
+            ctx.ellipse(topX, topY, radius, radius * 0.45, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 5. Deep Inner Pore
+            ctx.fillStyle = darkShadow;
+            ctx.beginPath();
+            ctx.ellipse(topX, topY, radius * 0.65, radius * 0.28, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawCoralCluster(canvasId, seed) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const cx = canvas.width / 2;
+            const baseFloor = canvas.height - 20;
+
+            // Sprawling layout where bases cluster compactly but tube heads flare outwards naturally
+            let layout = [
+                { bx: -65, tx: -85, h: 220, bend: -25, r: 15 },
+                { bx: -40, tx: -55, h: 265, bend: -18, r: 17 },
+                { bx: -18, tx: -20, h: 295, bend: -5,  r: 16 },
+                { bx: 12,  tx: 15,  h: 290, bend: 8,   r: 18 },
+                { bx: 38,  tx: 50,  h: 260, bend: 22,  r: 16 },
+                { bx: 62,  tx: 82,  h: 225, bend: 30,  r: 15 },
+                // Background layers for depth
+                { bx: -52, tx: -35, h: 200, bend: -10, r: 14 },
+                { bx: -25, tx: -5,  h: 235, bend: 2,   r: 15 },
+                { bx: 5,   tx: 22,  h: 245, bend: 12,  r: 15 },
+                { bx: 30,  tx: 55,  h: 210, bend: 20,  r: 14 },
+                { bx: -5,  tx: 0,   h: 275, bend: -2,  r: 16 }
+            ];
+
+            layout.forEach((item, index) => {
+                let jitter = Math.sin(index * 2.1 + seed) * 10;
+                let heightJitter = Math.cos(index * seed) * 12;
+
+                let startX = cx + item.bx;
+                let topX = cx + item.tx + jitter;
+                let topY = baseFloor - (item.h + heightJitter);
+                let bend = item.bend + jitter * 0.5;
+
+                drawNaturalCoralTube(ctx, startX, baseFloor, topX, topY, item.r, bend);
+            });
+        }
+
+        drawCoralCluster('oc_v1', 0.5);
+        drawCoralCluster('oc_v2', 1.9);
+        drawCoralCluster('oc_v3', 3.4);
+        drawCoralCluster('oc_v4', 4.8);
+
+        function downloadAsset(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>

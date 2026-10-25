@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low-Poly Wizard Sprite Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    .checkerboard {
+      background-image: 
+        linear-gradient(45deg, #1e293b 25%, transparent 25%), 
+        linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #1e293b 75%), 
+        linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8">
+
+  <!-- Header -->
+  <header class="text-center mb-6 max-w-xl">
+    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">Wizard Sprite Generator</h1>
+    <p class="text-slate-400 text-sm">Symmetrical T-pose baseline with centered body-pivot tilt rotation, independent arm angles, and dense ash particle effects.</p>
+  </header>
+
+  <!-- Main Grid -->
+  <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+
+    <!-- Preview Canvas Panel -->
+    <div class="md:col-span-6 lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center shadow-2xl">
+      <div class="checkerboard w-full max-w-[320px] h-[480px] rounded-xl border border-slate-700/60 overflow-hidden flex items-center justify-center relative shadow-inner">
+        <canvas id="wizardCanvas" width="512" height="768" class="w-full h-full object-contain"></canvas>
+      </div>
+
+      <button onclick="downloadPNG()" class="w-full mt-5 py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        Export Sprite PNG
+      </button>
+    </div>
+
+    <!-- Controls Panel -->
+    <div class="md:col-span-6 lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col gap-6 max-h-[80vh] overflow-y-auto">
+      
+      <!-- Presets Section -->
+      <div>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">Target Asset Presets</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <button onclick="applyPreset('blue_staff')" class="preset-btn px-3 py-2 bg-indigo-600/20 border border-indigo-500 rounded-lg text-left transition-all">
+            <div class="text-[10px] text-indigo-300">Preset</div>
+            <div class="text-xs font-semibold text-white">Blue + Staff</div>
+          </button>
+          <button onclick="applyPreset('blue_robe')" class="preset-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition-all">
+            <div class="text-[10px] text-slate-400">Preset</div>
+            <div class="text-xs font-semibold text-white">Blue Robe</div>
+          </button>
+          <button onclick="applyPreset('grey_robe')" class="preset-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition-all">
+            <div class="text-[10px] text-slate-400">Preset</div>
+            <div class="text-xs font-semibold text-white">Grey Robe</div>
+          </button>
+          <button onclick="applyPreset('white_transform')" class="preset-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition-all">
+            <div class="text-[10px] text-slate-400">Variant</div>
+            <div class="text-xs font-semibold text-white">Solid White</div>
+          </button>
+          <button onclick="applyPreset('red_hurt')" class="preset-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition-all">
+            <div class="text-[10px] text-slate-400">Variant</div>
+            <div class="text-xs font-semibold text-white">Red Hurt</div>
+          </button>
+          <button onclick="applyPreset('tilt_pose')" class="preset-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition-all">
+            <div class="text-[10px] text-slate-400">Variant</div>
+            <div class="text-xs font-semibold text-white">Tilted</div>
+          </button>
+          <button onclick="applyPreset('red_tilt')" class="preset-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition-all">
+            <div class="text-[10px] text-slate-400">Variant</div>
+            <div class="text-xs font-semibold text-white">Red Tilted</div>
+          </button>
+          <button onclick="applyPreset('ash_disintegrate')" class="preset-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition-all">
+            <div class="text-[10px] text-slate-400">Variant</div>
+            <div class="text-xs font-semibold text-white">Ash Particle</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Fine-Tuning Controls -->
+      <div class="border-t border-slate-800 pt-5 space-y-4">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-2">Custom Adjustments</h2>
+
+        <!-- Theme / Style Mode -->
+        <div class="flex items-center justify-between gap-4">
+          <label class="text-sm font-medium text-slate-300">Sprite Variant Mode</label>
+          <select id="variantMode" onchange="render()" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="normal">Normal Colors</option>
+            <option value="white">Solid White Silhouette</option>
+            <option value="red_hurt">Red Filter (Hurt)</option>
+          </select>
+        </div>
+
+        <!-- Robe Theme -->
+        <div class="flex items-center justify-between gap-4">
+          <label class="text-sm font-medium text-slate-300">Robe Theme</label>
+          <select id="robeTheme" onchange="render()" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="blue">Blue Robe</option>
+            <option value="grey">Grey Robe</option>
+          </select>
+        </div>
+
+        <!-- Hat Toggle -->
+        <div class="flex items-center justify-between gap-4">
+          <label class="text-sm font-medium text-slate-300">Hat Equipment</label>
+          <select id="hasHat" onchange="render()" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="yes">Equipped</option>
+            <option value="no">None</option>
+          </select>
+        </div>
+
+        <!-- Staff Toggle -->
+        <div class="flex items-center justify-between gap-4">
+          <label class="text-sm font-medium text-slate-300">Weapon / Staff</label>
+          <select id="hasStaff" onchange="render()" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="yes">Equipped</option>
+            <option value="no">None</option>
+          </select>
+        </div>
+
+        <!-- Tilt & Ash Effects -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex items-center justify-between gap-2">
+            <label class="text-sm font-medium text-slate-300">Body Tilt</label>
+            <select id="isTilted" onchange="render()" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="no">Normal</option>
+              <option value="yes">Tilted (~25° Centered)</option>
+            </select>
+          </div>
+          <div class="flex items-center justify-between gap-2">
+            <label class="text-sm font-medium text-slate-300">Ash Disintegrate</label>
+            <select id="hasAsh" onchange="render()" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="no">None</option>
+              <option value="yes">Active</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Left Arm Angle Control (-180 to 180) -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-sm font-medium items-center">
+            <span class="text-slate-300">Left Arm Angle</span>
+            <div class="flex items-center gap-1">
+              <input type="number" id="leftArmAngleNum" min="-180" max="180" value="25" oninput="syncControl('leftArmAngle', this.value)" class="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-indigo-400 font-mono text-right text-sm outline-none">
+              <span class="text-indigo-400 font-mono text-sm">°</span>
+            </div>
+          </div>
+          <input type="range" id="leftArmAngle" min="-180" max="180" value="25" oninput="syncControl('leftArmAngleNum', this.value)" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+        </div>
+
+        <!-- Right Arm Angle Control (-180 to 180) -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-sm font-medium items-center">
+            <span class="text-slate-300">Right Arm Angle</span>
+            <div class="flex items-center gap-1">
+              <input type="number" id="rightArmAngleNum" min="-180" max="180" value="25" oninput="syncControl('rightArmAngle', this.value)" class="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-indigo-400 font-mono text-right text-sm outline-none">
+              <span class="text-indigo-400 font-mono text-sm">°</span>
+            </div>
+          </div>
+          <input type="range" id="rightArmAngle" min="-180" max="180" value="25" oninput="syncControl('rightArmAngleNum', this.value)" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+        </div>
+
+        <!-- Outline Thickness -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-sm font-medium">
+            <span class="text-slate-300">Outline Stroke Width</span>
+            <span id="strokeVal" class="text-indigo-400 font-mono">3.5px</span>
+          </div>
+          <input type="range" id="strokeWidth" min="0" max="6" value="3.5" step="0.5" oninput="document.getElementById('strokeVal').innerText = this.value + 'px'; render();" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function syncControl(targetId, val) {
+      const numVal = parseInt(val) || 0;
+      const clamped = Math.max(-180, Math.min(180, numVal));
+      
+      if (targetId === 'leftArmAngle') {
+        document.getElementById('leftArmAngle').value = clamped;
+        document.getElementById('leftArmAngleNum').value = clamped;
+      } else if (targetId === 'rightArmAngle') {
+        document.getElementById('rightArmAngle').value = clamped;
+        document.getElementById('rightArmAngleNum').value = clamped;
+      }
+      render();
+    }
+
+    function applyPreset(presetKey) {
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.className = 'preset-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition-all';
+      });
+      event.currentTarget.className = 'preset-btn px-3 py-2 bg-indigo-600/20 border border-indigo-500 rounded-lg text-left transition-all';
+
+      if (presetKey === 'blue_staff') {
+        document.getElementById('variantMode').value = 'normal';
+        document.getElementById('robeTheme').value = 'blue';
+        document.getElementById('hasHat').value = 'yes';
+        document.getElementById('hasStaff').value = 'yes';
+        document.getElementById('isTilted').value = 'no';
+        document.getElementById('hasAsh').value = 'no';
+        syncControl('leftArmAngle', 25);
+        syncControl('rightArmAngle', 25);
+      } else if (presetKey === 'blue_robe') {
+        document.getElementById('variantMode').value = 'normal';
+        document.getElementById('robeTheme').value = 'blue';
+        document.getElementById('hasHat').value = 'yes';
+        document.getElementById('hasStaff').value = 'no';
+        document.getElementById('isTilted').value = 'no';
+        document.getElementById('hasAsh').value = 'no';
+        syncControl('leftArmAngle', 25);
+        syncControl('rightArmAngle', 25);
+      } else if (presetKey === 'grey_robe') {
+        document.getElementById('variantMode').value = 'normal';
+        document.getElementById('robeTheme').value = 'grey';
+        document.getElementById('hasHat').value = 'no';
+        document.getElementById('hasStaff').value = 'no';
+        document.getElementById('isTilted').value = 'no';
+        document.getElementById('hasAsh').value = 'no';
+        syncControl('leftArmAngle', 25);
+        syncControl('rightArmAngle', 25);
+      } else if (presetKey === 'white_transform') {
+        document.getElementById('variantMode').value = 'white';
+        document.getElementById('robeTheme').value = 'blue';
+        document.getElementById('hasHat').value = 'yes';
+        document.getElementById('hasStaff').value = 'no';
+        document.getElementById('isTilted').value = 'no';
+        document.getElementById('hasAsh').value = 'no';
+        syncControl('leftArmAngle', 25);
+        syncControl('rightArmAngle', 25);
+      } else if (presetKey === 'red_hurt') {
+        document.getElementById('variantMode').value = 'red_hurt';
+        document.getElementById('robeTheme').value = 'blue';
+        document.getElementById('hasHat').value = 'yes';
+        document.getElementById('hasStaff').value = 'no';
+        document.getElementById('isTilted').value = 'no';
+        document.getElementById('hasAsh').value = 'no';
+        syncControl('leftArmAngle', 25);
+        syncControl('rightArmAngle', 25);
+      } else if (presetKey === 'tilt_pose') {
+        document.getElementById('variantMode').value = 'normal';
+        document.getElementById('robeTheme').value = 'blue';
+        document.getElementById('hasHat').value = 'yes';
+        document.getElementById('hasStaff').value = 'no';
+        document.getElementById('isTilted').value = 'yes';
+        document.getElementById('hasAsh').value = 'no';
+        syncControl('leftArmAngle', 25);
+        syncControl('rightArmAngle', 25);
+      } else if (presetKey === 'red_tilt') {
+        document.getElementById('variantMode').value = 'red_hurt';
+        document.getElementById('robeTheme').value = 'blue';
+        document.getElementById('hasHat').value = 'yes';
+        document.getElementById('hasStaff').value = 'no';
+        document.getElementById('isTilted').value = 'yes';
+        document.getElementById('hasAsh').value = 'no';
+        syncControl('leftArmAngle', 25);
+        syncControl('rightArmAngle', 25);
+      } else if (presetKey === 'ash_disintegrate') {
+        document.getElementById('variantMode').value = 'red_hurt';
+        document.getElementById('robeTheme').value = 'blue';
+        document.getElementById('hasHat').value = 'yes';
+        document.getElementById('hasStaff').value = 'no';
+        document.getElementById('isTilted').value = 'yes';
+        document.getElementById('hasAsh').value = 'yes';
+        syncControl('leftArmAngle', 25);
+        syncControl('rightArmAngle', 25);
+      }
+      render();
+    }
+
+    function render() {
+      const canvas = document.getElementById('wizardCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const variantMode = document.getElementById('variantMode').value;
+      const robeTheme = document.getElementById('robeTheme').value;
+      const hasHat = document.getElementById('hasHat').value === 'yes';
+      const hasStaff = document.getElementById('hasStaff').value === 'yes';
+      const isTilted = document.getElementById('isTilted').value === 'yes';
+      const hasAsh = document.getElementById('hasAsh').value === 'yes';
+      const lAngleDeg = parseFloat(document.getElementById('leftArmAngle').value);
+      const rAngleDeg = parseFloat(document.getElementById('rightArmAngle').value);
+      const strokeW = parseFloat(document.getElementById('strokeWidth').value);
+
+      const isBlue = robeTheme === 'blue';
+
+      // Base Palettes
+      let colors = {
+        robeLight: isBlue ? '#2e38c9' : '#4a5568',
+        robeDark: isBlue ? '#1e2694' : '#333e4f',
+        robeLapel: isBlue ? '#232cb3' : '#3d4b5e',
+        hatLight: isBlue ? '#2e38c9' : '#4a5568',
+        hatDark: isBlue ? '#1e2694' : '#333e4f',
+        hatBandLight: '#e67e22',
+        hatBandDark: '#d35400',
+        skinLight: '#ffe8d6',
+        skinDark: '#e0c2a8',
+        neckWhite: '#e2e8f0',
+        legs: '#232b38',
+        boots: '#111827',
+        outline: '#111827',
+        staffWood: '#4a2c11',
+        orbCyan: '#00d8f6'
+      };
+
+      if (variantMode === 'white') {
+        colors = {
+          robeLight: '#ffffff', robeDark: '#ffffff', robeLapel: '#ffffff',
+          hatLight: '#ffffff', hatDark: '#ffffff', hatBandLight: '#ffffff', hatBandDark: '#ffffff',
+          skinLight: '#ffffff', skinDark: '#ffffff', neckWhite: '#ffffff',
+          legs: '#ffffff', boots: '#ffffff', outline: 'transparent',
+          staffWood: '#ffffff', orbCyan: '#ffffff'
+        };
+      } else if (variantMode === 'red_hurt') {
+        colors = {
+          robeLight: '#b91c1c', robeDark: '#7f1d1d', robeLapel: '#991b1b',
+          hatLight: '#b91c1c', hatDark: '#7f1d1d', hatBandLight: '#ef4444', hatBandDark: '#dc2626',
+          skinLight: '#fca5a5', skinDark: '#f87171', neckWhite: '#fecaca',
+          legs: '#450a0a', boots: '#2b0505', outline: '#1a0202',
+          staffWood: '#521818', orbCyan: '#ef4444'
+        };
+      }
+
+      ctx.save();
+
+      // Centered Pivot Translation
+      const pivotX = 256;
+      const pivotY = 450;
+
+      ctx.translate(pivotX, pivotY);
+
+      if (isTilted) {
+        ctx.rotate((25 * Math.PI) / 180);
+      }
+
+      ctx.translate(0, 230);
+
+      ctx.lineWidth = strokeW;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+
+      // --- 1. LEGS & BOOTS ---
+      const legW = 20;
+      const legH = 100;
+      const legGap = 14;
+
+      ctx.fillStyle = colors.legs;
+      ctx.fillRect(-legGap - legW, -legH, legW, legH);
+      if (colors.outline !== 'transparent' && strokeW > 0) {
+        ctx.strokeStyle = colors.outline;
+        ctx.strokeRect(-legGap - legW, -legH, legW, legH);
+      }
+
+      ctx.fillRect(legGap, -legH, legW, legH);
+      if (colors.outline !== 'transparent' && strokeW > 0) {
+        ctx.strokeRect(legGap, -legH, legW, legH);
+      }
+
+      ctx.fillStyle = colors.boots;
+      ctx.fillRect(-legGap - legW - 2, -26, legW + 4, 26);
+      if (colors.outline !== 'transparent' && strokeW > 0) {
+        ctx.strokeRect(-legGap - legW - 2, -26, legW + 4, 26);
+      }
+
+      ctx.fillRect(legGap - 2, -26, legW + 4, 26);
+      if (colors.outline !== 'transparent' && strokeW > 0) {
+        ctx.strokeRect(legGap - 2, -26, legW + 4, 26);
+      }
+
+      // --- 2. MAIN ROBE BODY ---
+      const robeTopY = -350;
+      const robeBottomY = -100;
+      const torsoW = 48;
+      const bottomW = 76;
+      const lapelW = 22;
+
+      ctx.fillStyle = colors.robeDark;
+      ctx.beginPath();
+      ctx.moveTo(0, robeTopY);
+      ctx.lineTo(torsoW, robeTopY);
+      ctx.lineTo(bottomW, robeBottomY);
+      ctx.lineTo(0, robeBottomY);
+      ctx.closePath();
+      ctx.fill();
+      if (colors.outline !== 'transparent' && strokeW > 0) {
+        ctx.strokeStyle = colors.outline;
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = colors.robeLight;
+      ctx.beginPath();
+      ctx.moveTo(-torsoW, robeTopY);
+      ctx.lineTo(0, robeTopY);
+      ctx.lineTo(0, robeBottomY);
+      ctx.lineTo(-bottomW, robeBottomY);
+      ctx.closePath();
+      ctx.fill();
+      if (colors.outline !== 'transparent' && strokeW > 0) {
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = colors.robeLapel;
+      ctx.beginPath();
+      ctx.moveTo(-torsoW + 6, robeTopY);
+      ctx.lineTo(-torsoW + 6 + lapelW, robeTopY);
+      ctx.lineTo(-lapelW + 6, robeBottomY);
+      ctx.lineTo(-bottomW + 6, robeBottomY);
+      ctx.closePath();
+      ctx.fill();
+      if (colors.outline !== 'transparent' && strokeW > 0) {
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = colors.neckWhite;
+      ctx.fillRect(-20, robeTopY - 22, 40, 22);
+      if (colors.outline !== 'transparent' && strokeW > 0) {
+        ctx.strokeRect(-20, robeTopY - 22, 40, 22);
+      }
+
+      // --- 3. CONSISTENT ROUND HEAD ---
+      const headCenterY = robeTopY - 22 - 38;
+      const headRadius = 38;
+
+      ctx.fillStyle = colors.skinLight;
+      ctx.beginPath();
+      ctx.arc(0, headCenterY, headRadius, Math.PI / 2, (3 * Math.PI) / 2);
+      ctx.fill();
+
+      ctx.fillStyle = colors.skinDark;
+      ctx.beginPath();
+      ctx.arc(0, headCenterY, headRadius, -Math.PI / 2, Math.PI / 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(0, headCenterY, headRadius, 0, Math.PI * 2);
+      if (colors.outline !== 'transparent' && strokeW > 0) {
+        ctx.strokeStyle = colors.outline;
+        ctx.stroke();
+      }
+
+      // --- 4. ARMS ---
+      const sleeveL = 95;
+      const sleeveW = 34;
+      const handW = 20;
+      const handH = 22;
+      const shoulderY = robeTopY + 16;
+      const lShoulderX = -torsoW;
+      const rShoulderX = torsoW;
+
+      const lRad = (lAngleDeg * Math.PI) / 180;
+      const rRad = (rAngleDeg * Math.PI) / 180;
+
+      const rHandCenterX = rShoulderX + Math.cos(rRad) * (sleeveL + handW / 2);
+      const rHandCenterY = shoulderY + Math.sin(rRad) * (sleeveL + handW / 2);
+
+      // --- 5. STAFF ---
+      if (hasStaff) {
+        ctx.save();
+        ctx.translate(rHandCenterX, rHandCenterY);
+
+        ctx.fillStyle = colors.staffWood;
+        ctx.fillRect(-5, -280, 10, 480);
+        if (colors.outline !== 'transparent' && strokeW > 0) {
+          ctx.strokeStyle = colors.outline;
+          ctx.strokeRect(-5, -280, 10, 480);
+        }
+
+        ctx.fillStyle = colors.robeDark;
+        ctx.fillRect(-12, -294, 24, 14);
+        if (colors.outline !== 'transparent' && strokeW > 0) {
+          ctx.strokeRect(-12, -294, 24, 14);
+        }
+
+        const orbY = -322;
+        const orbRadius = 26;
+
+        const glow = ctx.createRadialGradient(0, orbY, 4, 0, orbY, orbRadius * 2.2);
+        glow.addColorStop(0, variantMode === 'white' ? 'rgba(255,255,255,0.7)' : 'rgba(0, 216, 246, 0.7)');
+        glow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(0, orbY, orbRadius * 2.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = colors.orbCyan;
+        ctx.beginPath();
+        ctx.arc(0, orbY, orbRadius, 0, Math.PI * 2);
+        ctx.fill();
+        if (colors.outline !== 'transparent' && strokeW > 0) {
+          ctx.strokeStyle = colors.outline;
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      // Draw Left Arm
+      ctx.save();
+      ctx.translate(lShoulderX, shoulderY);
+      ctx.rotate(Math.PI + lRad);
+
+      ctx.fillStyle = colors.robeLight;
+      ctx.fillRect(0, -sleeveW / 2, sleeveL, sleeveW);
+      if (colors.outline !== 'transparent' && strokeW > 0) {
+        ctx.strokeStyle = colors.outline;
+        ctx.strokeRect(0, -sleeveW / 2, sleeveL, sleeveW);
+      }
+
+      ctx.fillStyle = colors.skinLight;
+      ctx.fillRect(sleeveL, -handH / 2, handW, handH);
+      if (colors.outline !== 'transparent' && strokeW > 0) {
+        ctx.strokeRect(sleeveL, -handH / 2, handW, handH);
+      }
+      ctx.restore();
+
+      // Draw Right Arm
+      ctx.save();
+      ctx.translate(rShoulderX, shoulderY);
+      ctx.rotate(rRad);
+
+      ctx.fillStyle = colors.robeDark;
+      ctx.fillRect(0, -sleeveW / 2, sleeveL, sleeveW);
+      if (colors.outline !== 'transparent' && strokeW > 0) {
+        ctx.strokeStyle = colors.outline;
+        ctx.strokeRect(0, -sleeveW / 2, sleeveL, sleeveW);
+      }
+
+      ctx.fillStyle = colors.skinDark;
+      ctx.fillRect(sleeveL, -handH / 2, handW, handH);
+      if (colors.outline !== 'transparent' && strokeW > 0) {
+        ctx.strokeRect(sleeveL, -handH / 2, handW, handH);
+      }
+      ctx.restore();
+
+      // --- 6. HAT ---
+      if (hasHat) {
+        const hatBaseY = headCenterY - 14;
+
+        ctx.fillStyle = colors.hatLight;
+        ctx.beginPath();
+        ctx.ellipse(0, hatBaseY, 100, 22, 0, Math.PI, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = colors.hatDark;
+        ctx.beginPath();
+        ctx.ellipse(0, hatBaseY, 100, 22, 0, 0, Math.PI);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.ellipse(0, hatBaseY, 100, 22, 0, 0, Math.PI * 2);
+        if (colors.outline !== 'transparent' && strokeW > 0) {
+          ctx.strokeStyle = colors.outline;
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = colors.hatBandLight;
+        ctx.fillRect(-45, hatBaseY - 18, 45, 18);
+        ctx.fillStyle = colors.hatBandDark;
+        ctx.fillRect(0, hatBaseY - 18, 45, 18);
+        if (colors.outline !== 'transparent' && strokeW > 0) {
+          ctx.strokeRect(-45, hatBaseY - 18, 90, 18);
+        }
+
+        const coneHeight = 130;
+        ctx.fillStyle = colors.hatLight;
+        ctx.beginPath();
+        ctx.moveTo(0, hatBaseY - coneHeight);
+        ctx.lineTo(-45, hatBaseY - 18);
+        ctx.lineTo(0, hatBaseY - 18);
+        ctx.closePath();
+        ctx.fill();
+        if (colors.outline !== 'transparent' && strokeW > 0) {
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = colors.hatDark;
+        ctx.beginPath();
+        ctx.moveTo(0, hatBaseY - coneHeight);
+        ctx.lineTo(0, hatBaseY - 18);
+        ctx.lineTo(45, hatBaseY - 18);
+        ctx.closePath();
+        ctx.fill();
+        if (colors.outline !== 'transparent' && strokeW > 0) {
+          ctx.stroke();
+        }
+      }
+
+      // --- 7. DENSE ASH / DISINTEGRATION PARTICLES ---
+      if (hasAsh) {
+        ctx.save();
+        ctx.fillStyle = variantMode === 'white' ? '#ffffff' : '#334155';
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1;
+        
+        // High-density ash particles matching reference
+        const denseParticles = [
+          {x: -140, y: -300, size: 7}, {x: -160, y: -285, size: 4}, {x: -130, y: -270, size: 9},
+          {x: -175, y: -250, size: 5}, {x: -150, y: -230, size: 8}, {x: -185, y: -210, size: 6},
+          {x: -135, y: -195, size: 4}, {x: -165, y: -180, size: 10}, {x: -190, y: -160, size: 5},
+          {x: -145, y: -140, size: 7}, {x: -170, y: -120, size: 8}, {x: -130, y: -100, size: 5},
+          {x: -180, y: -80, size: 9},  {x: -155, y: -60, size: 4},  {x: -165, y: -40, size: 7},
+          {x: -140, y: -20, size: 6},  {x: -175, y: 0, size: 8},    {x: -150, y: 25, size: 5},
+          {x: -125, y: -220, size: 6}, {x: -195, y: -190, size: 4}, {x: -135, y: -130, size: 8}
+        ];
+
+        denseParticles.forEach(p => {
+          ctx.fillRect(p.x, p.y, p.size, p.size);
+          ctx.strokeRect(p.x, p.y, p.size, p.size);
+        });
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    function downloadPNG() {
+      const canvas = document.getElementById('wizardCanvas');
+      const link = document.createElement('a');
+      link.download = 'wizard_sprite_variant.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    window.onload = () => {
+      applyPreset('blue_staff');
+    };
+  </script>
+</body>
+</html>

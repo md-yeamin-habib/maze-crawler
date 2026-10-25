@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Clean High-Polygon 3D Crab Generator - Back POV (1 to 3)</title>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 { color: #ef4444; margin-bottom: 5px; }
+        p { color: #94a3b8; font-size: 14px; margin-top: 0; }
+        .controls {
+            margin: 20px 0;
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 8px;
+            display: inline-block;
+            border: 1px solid #334155;
+        }
+        button {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: #fef3c7;
+            border: 1px solid #fca5a5;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover { opacity: 0.9; }
+        button.active { border: 2px solid #ffffff; box-shadow: 0 0 14px rgba(239, 68, 68, 0.9); }
+        .canvas-container {
+            background: #ffffff;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 10px;
+            display: inline-block;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            margin-top: 10px;
+        }
+        canvas { display: block; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <h1>Crab Generator — Back POV (Idle 1 to 3)</h1>
+    <p>Extended Eye Stalks, Clean Carapace & Overlapping Claws</p>
+
+    <div class="controls">
+        <button id="btn1" onclick="setFrame(1)" class="active">Frame 1: Left Open</button>
+        <button id="btn2" onclick="setFrame(2)">Frame 2: Both Open</button>
+        <button id="btn3" onclick="setFrame(3)">Frame 3: Right Open</button>
+        <br><br>
+        <button onclick="downloadAsset()" style="background: linear-gradient(135deg, #059669, #10b981);">Download Current Back PNG</button>
+    </div>
+
+    <br>
+    <div class="canvas-container">
+        <canvas id="crabCanvas" width="500" height="480"></canvas>
+    </div>
+
+    <script>
+        let currentFrame = 1;
+
+        function setFrame(frameNum) {
+            currentFrame = frameNum;
+            document.getElementById('btn1').className = (frameNum === 1) ? 'active' : '';
+            document.getElementById('btn2').className = (frameNum === 2) ? 'active' : '';
+            document.getElementById('btn3').className = (frameNum === 3) ? 'active' : '';
+            renderAsset();
+        }
+
+        function renderAsset() {
+            const canvas = document.getElementById('crabCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2 + 35);
+            
+            let scale = 2.0;
+            ctx.scale(scale, scale);
+
+            const colPrimary   = '#dc2626';
+            const colShadow    = '#b91c1c';
+            const colDeepCore  = '#991b1b';
+            const colOutline   = '#450a0a';
+
+            function drawPolygon(points, fillColor) {
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+                for (let p = 1; p < points.length; p++) {
+                    ctx.lineTo(points[p].x, points[p].y);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = colOutline;
+                ctx.lineWidth = 1.1;
+                ctx.stroke();
+            }
+
+            // --- Background Legs ---
+            for (let side = -1; side <= 1; side += 2) {
+                for (let i = 0; i < 3; i++) {
+                    let dir = side;
+                    let bx = dir * (24 + i * 4);
+                    let by = 10 + (i * 5);
+                    let mx = dir * (48 + i * 6);
+                    let my = 20 + (i * 5);
+                    let tx = dir * (38 + i * 6);
+                    let ty = 44 + (i * 4);
+
+                    drawPolygon([
+                        {x: bx, y: by}, {x: mx, y: my}, {x: tx, y: ty}, {x: bx + dir*3, y: by + 5}
+                    ], colDeepCore);
+                }
+            }
+
+            // --- Clean Rear Carapace Mesh (No stray projections) ---
+            drawPolygon([
+                {x: -28, y: -20}, {x: 28, y: -20}, {x: 28, y: 24}, {x: -28, y: 24}
+            ], colPrimary);
+
+            drawPolygon([{x: 0, y: -26}, {x: -20, y: -14}, {x: -22, y: 6}, {x: 0, y: 20}], colShadow);
+            drawPolygon([{x: 0, y: -26}, {x: 20, y: -14}, {x: 22, y: 6}, {x: 0, y: 20}], colPrimary);
+            drawPolygon([{x: -20, y: -14}, {x: -26, y: -2}, {x: -24, y: 14}, {x: -22, y: 6}], colShadow);
+            drawPolygon([{x: 20, y: -14}, {x: 26, y: -2}, {x: 24, y: 14}, {x: 22, y: 6}], colDeepCore);
+            drawPolygon([{x: -22, y: 14}, {x: 22, y: 14}, {x: 16, y: 24}, {x: -16, y: 24}], colDeepCore);
+            drawPolygon([{x: 0, y: -26}, {x: -4, y: -6}, {x: 0, y: 24}, {x: 4, y: -6}], colShadow);
+
+            // --- Foreground Legs ---
+            for (let side = -1; side <= 1; side += 2) {
+                let dir = side;
+                let bx = dir * 24;
+                let by = 14;
+                let mx = dir * 48;
+                let my = 26;
+                let tx = dir * 38;
+                let ty = 48;
+
+                drawPolygon([
+                    {x: bx, y: by}, {x: mx, y: my}, {x: mx - dir*4, y: my + 6}, {x: bx - dir*3, y: by + 6}
+                ], colPrimary);
+                drawPolygon([
+                    {x: mx, y: my}, {x: tx, y: ty}, {x: tx - dir*5, y: ty + 4}, {x: mx - dir*4, y: my + 6}
+                ], colShadow);
+            }
+
+            // --- Extended Eye Stalks meeting the Upper Black Semicircles ---
+            for (let side = -1; side <= 1; side += 2) {
+                let dir = side;
+                // Extended stalks reaching directly up to the black semicircle base
+                drawPolygon([
+                    {x: dir*5, y: -16}, {x: dir*10, y: -16}, {x: dir*10, y: -35}, {x: dir*5, y: -35}
+                ], colDeepCore);
+                // Upper black semicircle attached at the top of the extended stalk
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.arc(dir * 7.5, -35, 3.8, Math.PI, 0, false);
+                ctx.fill();
+                ctx.strokeStyle = colOutline;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+
+            // --- Claws with Correct Overlapping Stacking Order ---
+            let leftOpen = (currentFrame === 1 || currentFrame === 2);
+            let rightOpen = (currentFrame === 2 || currentFrame === 3);
+
+            function drawBackClaw(dir, isOpen) {
+                ctx.save();
+                ctx.translate(dir * 20, -14);
+
+                ctx.fillStyle = colDeepCore;
+                ctx.beginPath();
+                ctx.arc(0, 0, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = colOutline;
+                ctx.lineWidth = 1.1;
+                ctx.stroke();
+
+                drawPolygon([
+                    {x: 0, y: 0}, {x: dir * 14, y: -20}, {x: dir * 10, y: -28}, {x: -dir * 4, y: -10}
+                ], colShadow);
+
+                drawPolygon([
+                    {x: dir * 14, y: -20}, {x: dir * 26, y: -38}, {x: dir * 18, y: -46}, {x: dir * 8, y: -28}
+                ], colDeepCore);
+
+                // Layer 1: Lower pincer drawn first
+                ctx.save();
+                ctx.translate(dir * 18, -46);
+                if (isOpen) {
+                    ctx.rotate(-dir * 0.55);
+                } else {
+                    ctx.rotate(-dir * 0.05);
+                }
+                ctx.translate(-dir * 18, 46);
+
+                drawPolygon([
+                    {x: dir * 18, y: -46}, 
+                    {x: dir * 32, y: -34}, 
+                    {x: dir * 40, y: -46}, 
+                    {x: dir * 28, y: -56}
+                ], colShadow);
+                ctx.restore();
+
+                // Layer 2: Upper pincer polygon overlapping cleanly over the lower one
+                drawPolygon([
+                    {x: dir * 18, y: -46}, 
+                    {x: dir * 42, y: -64}, 
+                    {x: dir * 30, y: -80}, 
+                    {x: dir * 12, y: -58}
+                ], colPrimary);
+
+                ctx.restore();
+            }
+
+            drawBackClaw(-1, leftOpen);
+            drawBackClaw(1, rightOpen);
+
+            ctx.restore();
+        }
+
+        function downloadAsset() {
+            const canvas = document.getElementById('crabCanvas');
+            const link = document.createElement('a');
+            link.download = `crab_idle_back${currentFrame}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        window.onload = renderAsset;
+    </script>
+
+</body>
+</html>

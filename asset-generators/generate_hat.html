@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Low-Poly Wizard Hat 360° Asset Generator</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 { margin-bottom: 5px; }
+        .grid {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .card {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+        canvas {
+            background: transparent;
+            border: 1px dashed #475569;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: block;
+        }
+        button {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🧙‍♂️ Low-Poly Wizard Hat Asset Builder</h2>
+    <p style="color: #94a3b8; margin-top: 0;">Faceted 360° directional views matching your 3D model reference.</p>
+
+    <div class="grid">
+        <!-- FRONT -->
+        <div class="card">
+            <h3>Front View</h3>
+            <canvas id="frontCanvas" width="256" height="256"></canvas>
+            <button onclick="downloadAsset('frontCanvas', 'wizard_hat_front.png')">Download Front</button>
+        </div>
+
+        <!-- BACK -->
+        <div class="card">
+            <h3>Back View</h3>
+            <canvas id="backCanvas" width="256" height="256"></canvas>
+            <button onclick="downloadAsset('backCanvas', 'wizard_hat_back.png')">Download Back</button>
+        </div>
+
+        <!-- LEFT SIDE -->
+        <div class="card">
+            <h3>Left Side</h3>
+            <canvas id="leftCanvas" width="256" height="256"></canvas>
+            <button onclick="downloadAsset('leftCanvas', 'wizard_hat_left.png')">Download Left</button>
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="card">
+            <h3>Right Side</h3>
+            <canvas id="rightCanvas" width="256" height="256"></canvas>
+            <button onclick="downloadAsset('rightCanvas', 'wizard_hat_right.png')">Download Right</button>
+        </div>
+    </div>
+
+    <script>
+        // Helper to draw low-poly brim and gold ring common to all views
+        function drawBaseAndRing(ctx, cx, cy) {
+            // Dark Underside Brim (Faceted)
+            ctx.fillStyle = '#1e1b4b';
+            ctx.beginPath();
+            ctx.moveTo(cx - 100, cy + 12);
+            ctx.lineTo(cx, cy + 22);
+            ctx.lineTo(cx + 100, cy + 12);
+            ctx.lineTo(cx, cy + 2);
+            ctx.closePath();
+            ctx.fill();
+
+            // Main Flat Brim Polygon
+            ctx.fillStyle = '#312e81';
+            ctx.beginPath();
+            ctx.moveTo(cx - 105, cy + 10);
+            ctx.lineTo(cx - 70, cy);
+            ctx.lineTo(cx + 70, cy);
+            ctx.lineTo(cx + 105, cy + 10);
+            ctx.lineTo(cx + 70, cy + 18);
+            ctx.lineTo(cx - 70, cy + 18);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#1e1b4b';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Gold Ring / Band right above the brim
+            ctx.fillStyle = '#d97706';
+            ctx.beginPath();
+            ctx.moveTo(cx - 50, cy);
+            ctx.lineTo(cx - 45, cy - 18);
+            ctx.lineTo(cx + 45, cy - 18);
+            ctx.lineTo(cx + 50, cy);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#f59e0b';
+            ctx.stroke();
+        }
+
+        // 1. FRONT VIEW
+        function drawFront(ctx, w, h) {
+            ctx.clearRect(0, 0, w, h);
+            const cx = w / 2, cy = h / 2 + 40;
+            drawBaseAndRing(ctx, cx, cy);
+
+            // Low-poly faceted cone (Front)
+            // Left Face
+            ctx.fillStyle = '#4338ca';
+            ctx.beginPath();
+            ctx.moveTo(cx - 45, cy - 18);
+            ctx.lineTo(cx, cy - 110);
+            ctx.lineTo(cx - 20, cy - 18);
+            ctx.closePath();
+            ctx.fill();
+
+            // Center Face
+            ctx.fillStyle = '#4f46e5';
+            ctx.beginPath();
+            ctx.moveTo(cx - 20, cy - 18);
+            ctx.lineTo(cx, cy - 110);
+            ctx.lineTo(cx + 25, cy - 18);
+            ctx.closePath();
+            ctx.fill();
+
+            // Right Face
+            ctx.fillStyle = '#3730a3';
+            ctx.beginPath();
+            ctx.moveTo(cx + 25, cy - 18);
+            ctx.lineTo(cx, cy - 110);
+            ctx.lineTo(cx + 45, cy - 18);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        // 2. BACK VIEW
+        function drawBack(ctx, w, h) {
+            ctx.clearRect(0, 0, w, h);
+            const cx = w / 2, cy = h / 2 + 40;
+            drawBaseAndRing(ctx, cx, cy);
+
+            // Low-poly faceted cone (Back - darker shades)
+            ctx.fillStyle = '#312e81';
+            ctx.beginPath();
+            ctx.moveTo(cx - 45, cy - 18);
+            ctx.lineTo(cx, cy - 110);
+            ctx.lineTo(cx, cy - 18);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#3730a3';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 18);
+            ctx.lineTo(cx, cy - 110);
+            ctx.lineTo(cx + 45, cy - 18);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        // 3. LEFT SIDE VIEW (Tip leans right)
+        function drawLeft(ctx, w, h) {
+            ctx.clearRect(0, 0, w, h);
+            const cx = w / 2, cy = h / 2 + 40;
+            drawBaseAndRing(ctx, cx, cy);
+
+            // Slouching Cone leaning to the right
+            ctx.fillStyle = '#4f46e5';
+            ctx.beginPath();
+            ctx.moveTo(cx - 40, cy - 18);
+            ctx.lineTo(cx + 20, cy - 95);
+            ctx.lineTo(cx, cy - 18);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#3730a3';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 18);
+            ctx.lineTo(cx + 20, cy - 95);
+            ctx.lineTo(cx + 40, cy - 18);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        // 4. RIGHT SIDE VIEW (Tip leans left - mirrored version of left)
+        function drawRight(ctx, w, h) {
+            ctx.clearRect(0, 0, w, h);
+            const cx = w / 2, cy = h / 2 + 40;
+            drawBaseAndRing(ctx, cx, cy);
+
+            ctx.fillStyle = '#3730a3';
+            ctx.beginPath();
+            ctx.moveTo(cx - 40, cy - 18);
+            ctx.lineTo(cx - 20, cy - 95);
+            ctx.lineTo(cx, cy - 18);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#4f46e5';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 18);
+            ctx.lineTo(cx - 20, cy - 95);
+            ctx.lineTo(cx + 40, cy - 18);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        // Execute rendering
+        drawFront(document.getElementById('frontCanvas').getContext('2d'), 256, 256);
+        drawBack(document.getElementById('backCanvas').getContext('2d'), 256, 256);
+        drawLeft(document.getElementById('leftCanvas').getContext('2d'), 256, 256);
+        drawRight(document.getElementById('rightCanvas').getContext('2d'), 256, 256);
+
+        function downloadAsset(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+
+</body>
+</html>

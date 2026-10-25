@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crab Grab Asset Generator (Clean Overlap)</title>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 { color: #ef4444; margin-bottom: 5px; }
+        p { color: #94a3b8; font-size: 14px; margin-top: 0; }
+        .container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .card {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        canvas {
+            background-color: #ffffff;
+            background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%), 
+                              linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #e2e8f0 75%), 
+                              linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            border: 2px solid #475569;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: block;
+        }
+        button {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: #fef3c7;
+            border: 1px solid #6ee7b7;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+    <h1>🦀 Crab Grab Asset Generator 🧙‍♂️</h1>
+    <p>Flat Stationary Crab + Corrected Pincer Overlap — Transparent PNG</p>
+
+    <div class="container">
+        <div class="card">
+            <h3>Regular Crab Grab</h3>
+            <canvas id="canvasReg" width="480" height="600"></canvas>
+            <button onclick="downloadAsset('canvasReg', 'crab_grab_player_reg.png')">Download Regular PNG</button>
+        </div>
+
+        <div class="card">
+            <h3>Red Crab Grab</h3>
+            <canvas id="canvasRed" width="480" height="600"></canvas>
+            <button onclick="downloadAsset('canvasRed', 'crab_grab_player_red.png')">Download Red PNG</button>
+        </div>
+    </div>
+
+    <script>
+        const blueConfig = {
+            robeMain: '#312e81',
+            robeShadow: '#3730a3',
+            pantsColor: '#1e1b4b',
+            bootColor: '#0f172a',
+            skinColor: '#ffedd5',
+            neckColor: '#e2e8f0',
+            hatBand: '#d97706',
+            strokeColor: '#0f172a'
+        };
+
+        function drawPolygon(ctx, points, fillColor, strokeColor) {
+            ctx.fillStyle = fillColor;
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let p = 1; p < points.length; p++) {
+                ctx.lineTo(points[p].x, points[p].y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+        }
+
+        // --- 1. PROCEDURAL WIZARD ---
+        function drawWizard(ctx, cx, cy, isRedTinted) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(0.38); 
+            ctx.scale(1.35, 1.35);
+
+            const robeMain = isRedTinted ? '#991b1b' : blueConfig.robeMain;
+            const robeShadow = isRedTinted ? '#7f1d1d' : blueConfig.robeShadow;
+            const pantsColor = isRedTinted ? '#450a0a' : blueConfig.pantsColor;
+            const bootColor = isRedTinted ? '#290505' : blueConfig.bootColor;
+            const skinColor = isRedTinted ? '#fca5a5' : blueConfig.skinColor;
+            const neckColor = isRedTinted ? '#fecaca' : blueConfig.neckColor;
+            const hatBand = isRedTinted ? '#dc2626' : blueConfig.hatBand;
+            const strokeColor = isRedTinted ? '#450a0a' : blueConfig.strokeColor;
+            const strokeWidth = 1.5;
+
+            // Legs & Boots
+            ctx.fillStyle = pantsColor;
+            ctx.fillRect(-18, -110, 12, 90);
+            ctx.fillRect(6, -110, 12, 90);
+
+            ctx.fillStyle = bootColor;
+            ctx.fillRect(-20, -20, 16, 20);
+            ctx.fillRect(4, -20, 16, 20);
+
+            // Robe Body
+            ctx.fillStyle = robeMain;
+            ctx.beginPath();
+            ctx.moveTo(-22, -150); ctx.lineTo(22, -150); ctx.lineTo(36, -54); ctx.lineTo(-36, -54);
+            ctx.closePath(); ctx.fill();
+
+            ctx.fillStyle = robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(-22, -150); ctx.lineTo(0, -145); ctx.lineTo(-6, -54); ctx.lineTo(-36, -54);
+            ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = strokeColor; ctx.lineWidth = strokeWidth; ctx.stroke();
+
+            // Sleeves & Arms
+            ctx.fillStyle = robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(-22, -146); ctx.lineTo(-52, -115); ctx.lineTo(-40, -105); ctx.lineTo(-22, -120);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+
+            ctx.fillStyle = robeMain;
+            ctx.beginPath();
+            ctx.moveTo(22, -146); ctx.lineTo(52, -115); ctx.lineTo(40, -105); ctx.lineTo(22, -120);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+
+            ctx.fillStyle = skinColor;
+            ctx.beginPath();
+            ctx.moveTo(-52, -115); ctx.lineTo(-58, -108); ctx.lineTo(-46, -98); ctx.lineTo(-40, -105);
+            ctx.closePath(); ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(52, -115); ctx.lineTo(58, -108); ctx.lineTo(46, -98); ctx.lineTo(40, -105);
+            ctx.closePath(); ctx.fill();
+
+            // Neck & Head
+            ctx.fillStyle = neckColor;
+            ctx.fillRect(-6, -162, 12, 14);
+
+            ctx.fillStyle = skinColor;
+            ctx.beginPath();
+            ctx.arc(0, -176, 18, 0, Math.PI * 2);
+            ctx.fill(); ctx.strokeStyle = strokeColor; ctx.lineWidth = strokeWidth; ctx.stroke();
+
+            // Wizard Hat
+            ctx.fillStyle = robeMain;
+            ctx.beginPath();
+            ctx.ellipse(0, -186, 32, 10, 0, 0, Math.PI * 2);
+            ctx.fill(); ctx.strokeStyle = strokeColor; ctx.lineWidth = strokeWidth; ctx.stroke();
+
+            ctx.fillStyle = hatBand;
+            ctx.beginPath();
+            ctx.ellipse(0, -188, 20, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = robeMain;
+            ctx.beginPath();
+            ctx.moveTo(-18, -188); ctx.lineTo(18, -188); ctx.lineTo(4, -232);
+            ctx.closePath(); ctx.fill(); ctx.strokeStyle = strokeColor; ctx.lineWidth = strokeWidth; ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // --- 2. PROCEDURAL HIGH-POLY CRAB ---
+        function drawCrab(ctx, originX, originY) {
+            ctx.save();
+            ctx.translate(originX, originY);
+            
+            let scale = 1.45;
+            ctx.scale(scale, scale);
+
+            const colTopLight  = '#f87171';
+            const colPrimary   = '#dc2626';
+            const colShadow    = '#b91c1c';
+            const colDeepCore  = '#991b1b';
+            const colOutline   = '#450a0a';
+
+            // Background Legs
+            for (let side = -1; side <= 1; side += 2) {
+                for (let i = 0; i < 3; i++) {
+                    let dir = side;
+                    let bx = dir * (24 + i * 4); let by = 10 + (i * 5);
+                    let mx = dir * (48 + i * 6); let my = 20 + (i * 5);
+                    let tx = dir * (38 + i * 6); let ty = 44 + (i * 4);
+                    drawPolygon(ctx, [{x: bx, y: by}, {x: mx, y: my}, {x: tx, y: ty}, {x: bx + dir*3, y: by + 5}], colDeepCore, colOutline);
+                }
+            }
+
+            // Carapace Mesh
+            drawPolygon(ctx, [{x: -30, y: -22}, {x: 30, y: -22}, {x: 30, y: 26}, {x: -30, y: 26}], colPrimary, colOutline);
+            drawPolygon(ctx, [{x: 0, y: -28}, {x: -22, y: -16}, {x: -24, y: 6}, {x: 0, y: 22}], colTopLight, colOutline);
+            drawPolygon(ctx, [{x: 0, y: -28}, {x: 22, y: -16}, {x: 24, y: 6}, {x: 0, y: 22}], colPrimary, colOutline);
+            drawPolygon(ctx, [{x: -22, y: -16}, {x: -28, y: -4}, {x: -26, y: 16}, {x: -24, y: 6}], colPrimary, colOutline);
+            drawPolygon(ctx, [{x: 22, y: -16}, {x: 28, y: -4}, {x: 26, y: 16}, {x: 24, y: 6}], colShadow, colOutline);
+            drawPolygon(ctx, [{x: -28, y: -4}, {x: -32, y: 8}, {x: -28, y: 24}, {x: -26, y: 16}], colShadow, colOutline);
+            drawPolygon(ctx, [{x: 28, y: -4}, {x: 32, y: 8}, {x: 28, y: 24}, {x: 26, y: 16}], colDeepCore, colOutline);
+            drawPolygon(ctx, [{x: -24, y: 16}, {x: 24, y: 16}, {x: 18, y: 26}, {x: -18, y: 26}], colShadow, colOutline);
+            drawPolygon(ctx, [{x: 0, y: -28}, {x: -5, y: -8}, {x: 0, y: 26}, {x: 5, y: -8}], colTopLight, colOutline);
+
+            // Foreground Legs
+            for (let side = -1; side <= 1; side += 2) {
+                let dir = side;
+                let bx = dir * 26, by = 16, mx = dir * 52, my = 28, tx = dir * 42, ty = 50;
+                drawPolygon(ctx, [{x: bx, y: by}, {x: mx, y: my}, {x: mx - dir*4, y: my + 7}, {x: bx - dir*3, y: by + 7}], colPrimary, colOutline);
+                drawPolygon(ctx, [{x: mx, y: my}, {x: tx, y: ty}, {x: tx - dir*5, y: ty + 4}, {x: mx - dir*4, y: my + 7}], colShadow, colOutline);
+            }
+
+            // Eyes & Stalks
+            for (let side = -1; side <= 1; side += 2) {
+                let dir = side;
+                drawPolygon(ctx, [{x: dir*6, y: -18}, {x: dir*12, y: -20}, {x: dir*11, y: -32}, {x: dir*5, y: -30}], colDeepCore, colOutline);
+                ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(dir * 8.5, -35, 3.8, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = colOutline; ctx.lineWidth = 1; ctx.stroke();
+                ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(dir * 7.4, -36.2, 1.2, 0, Math.PI * 2); ctx.fill();
+            }
+
+            // Claws
+            function drawClaw(dir, isOpen) {
+                ctx.save();
+                ctx.translate(dir * 20, -14);
+                ctx.fillStyle = colDeepCore; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = colOutline; ctx.lineWidth = 1.1; ctx.stroke();
+
+                drawPolygon(ctx, [{x: 0, y: 0}, {x: dir * 14, y: -20}, {x: dir * 10, y: -28}, {x: -dir * 4, y: -10}], colPrimary, colOutline);
+                drawPolygon(ctx, [{x: dir * 14, y: -20}, {x: dir * 26, y: -38}, {x: dir * 18, y: -46}, {x: dir * 8, y: -28}], colShadow, colOutline);
+                drawPolygon(ctx, [{x: dir * 18, y: -46}, {x: dir * 42, y: -64}, {x: dir * 30, y: -80}, {x: dir * 12, y: -58}], colPrimary, colOutline);
+                drawPolygon(ctx, [{x: dir * 30, y: -80}, {x: dir * 42, y: -64}, {x: dir * 36, y: -54}, {x: dir * 22, y: -68}], colTopLight, colOutline);
+
+                ctx.save();
+                ctx.translate(dir * 18, -46);
+                ctx.rotate(isOpen ? -dir * 0.55 : -dir * 0.05);
+                ctx.translate(-dir * 18, 46);
+                drawPolygon(ctx, [{x: dir * 18, y: -46}, {x: dir * 32, y: -34}, {x: dir * 40, y: -46}, {x: dir * 28, y: -56}], colShadow, colOutline);
+                ctx.restore();
+                ctx.restore();
+            }
+
+            drawClaw(-1, true); // Left claw open
+            drawClaw(1, false); // Right claw closed
+            
+            ctx.restore();
+        }
+
+        // --- 3. OVERLAPPING FRONT PINCER BLADE (Drawn ON TOP of boot) ---
+        function drawTopPincer(ctx, originX, originY) {
+            ctx.save();
+            ctx.translate(originX, originY);
+            let scale = 1.45;
+            ctx.scale(scale, scale);
+
+            const colShadow  = '#b91c1c';
+            const colOutline = '#450a0a';
+
+            // Re-render just the rotating front pincer of the left claw over the boot
+            ctx.save();
+            ctx.translate(-20, -14);
+            ctx.translate(-18, -46);
+            ctx.rotate(0.55); 
+            ctx.translate(18, 46);
+
+            drawPolygon(ctx, [
+                {x: -18, y: -46}, 
+                {x: -32, y: -34}, 
+                {x: -40, y: -46}, 
+                {x: -28, y: -56}
+            ], colShadow, colOutline);
+
+            ctx.restore();
+            ctx.restore();
+        }
+
+        function renderComposite(canvasId, isRedTinted) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Layer 1: Flat stationary crab
+            drawCrab(ctx, 250, 420);
+
+            // Layer 2: Wizard positioned so boot enters the pincer joint
+            drawWizard(ctx, 195, 345, isRedTinted);
+
+            // Layer 3: Top pincer blade overlapping the front of the boot
+            drawTopPincer(ctx, 250, 420);
+        }
+
+        function init() {
+            renderComposite('canvasReg', false);
+            renderComposite('canvasRed', true);
+        }
+
+        function downloadAsset(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        window.onload = init;
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4-View Staff Lever Generator</title>
+  <style>
+    :root {
+      --bg: #12151e;
+      --panel: #1a1e2b;
+      --accent: #00d2ff;
+      --text: #e0e6ed;
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    h1 {
+      text-align: center;
+      color: #fff;
+      margin-bottom: 5px;
+    }
+    p.subtitle {
+      text-align: center;
+      color: #8a99ad;
+      margin-top: 0;
+      margin-bottom: 25px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+    .card {
+      background: var(--panel);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .card h3 {
+      margin: 0 0 12px 0;
+      font-size: 1.1rem;
+      color: var(--accent);
+    }
+    .canvas-container {
+      width: 256px;
+      height: 256px;
+      background-image: 
+        linear-gradient(45deg, #222634 25%, transparent 25%), 
+        linear-gradient(-45deg, #222634 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #222634 75%), 
+        linear-gradient(-45deg, transparent 75%, #222634 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid #2d3548;
+    }
+    canvas {
+      width: 256px;
+      height: 256px;
+      image-rendering: pixelated;
+    }
+    .controls {
+      margin-top: 12px;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    button {
+      background: #252b3c;
+      color: #fff;
+      border: 1px solid var(--accent);
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+    button:hover {
+      background: var(--accent);
+      color: #12151e;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Staff-Lever 4-View Generator</h1>
+  <p class="subtitle">Precise 3D alignment, angle-consistent base rotation & perspective foreshortening</p>
+
+  <div class="grid">
+    <!-- View 1: Left Inclination (Side View) -->
+    <div class="card">
+      <h3>1. Left Inclined (Side Profile)</h3>
+      <div class="canvas-container">
+        <canvas id="cvs-left" width="512" height="512"></canvas>
+      </div>
+      <div class="controls">
+        <button onclick="downloadPNG('cvs-left', 'lever_left.png')">Export PNG</button>
+      </div>
+    </div>
+
+    <!-- View 2: Right Inclination (Side View) -->
+    <div class="card">
+      <h3>2. Right Inclined (Side Profile)</h3>
+      <div class="canvas-container">
+        <canvas id="cvs-right" width="512" height="512"></canvas>
+      </div>
+      <div class="controls">
+        <button onclick="downloadPNG('cvs-right', 'lever_right.png')">Export PNG</button>
+      </div>
+    </div>
+
+    <!-- View 3: Front View (Inclinating Toward Viewer) -->
+    <div class="card">
+      <h3>3. Front View (Tilted Forward)</h3>
+      <div class="canvas-container">
+        <canvas id="cvs-front" width="512" height="512"></canvas>
+      </div>
+      <div class="controls">
+        <button onclick="downloadPNG('cvs-front', 'lever_front.png')">Export PNG</button>
+      </div>
+    </div>
+
+    <!-- View 4: Back View (Inclinating Away) -->
+    <div class="card">
+      <h3>4. Back View (Tilted Away)</h3>
+      <div class="canvas-container">
+        <canvas id="cvs-back" width="512" height="512"></canvas>
+      </div>
+      <div class="controls">
+        <button onclick="downloadPNG('cvs-back', 'lever_back.png')">Export PNG</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Render Configuration & Palette ---
+    const CONFIG = {
+      baseWidthSide: 260,
+      baseWidthFront: 100, // Narrow profile when rotated 90 deg
+      baseHeight: 44,
+      archRadius: 80,
+      staffLength: 210,
+      staffWidth: 16,
+      orbRadius: 32,
+      
+      // Colors
+      cBaseDark: '#3d1a10',
+      cBaseMid: '#5c2818',
+      cBaseLight: '#7a3622',
+      cMetalDark: '#2c333d',
+      cMetalMid: '#4f5b6c',
+      cMetalLight: '#8192a8',
+      cWoodDark: '#2b1704',
+      cWoodMid: '#4a2808',
+      cBand: '#008b8b',
+      cOrbCore: '#00e5ff',
+      cOrbGlow: 'rgba(0, 229, 255, 0.35)'
+    };
+
+    function drawLever(canvasId, viewType) {
+      const cvs = document.getElementById(canvasId);
+      const ctx = cvs.getContext('2d');
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+      const cx = cvs.width / 2;
+      const cy = cvs.height / 2 + 100; // Pivot origin point
+
+      ctx.save();
+
+      if (viewType === 'left' || viewType === 'right') {
+        // --- SIDE PROFILE VIEWS ---
+        const angle = viewType === 'left' ? -Math.PI / 4 : Math.PI / 4;
+        
+        // 1. Base Housing (Side View)
+        drawBaseSide(ctx, cx, cy);
+        
+        // 2. Staff + Orb Assembly (Rotated as a single rigid unit)
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angle);
+        drawStaffAndOrb(ctx, 0, 0, CONFIG.staffLength, CONFIG.staffWidth, 1.0);
+        ctx.restore();
+
+        // 3. Foreground Arch Plate & Bolts
+        drawArchSide(ctx, cx, cy);
+
+      } else if (viewType === 'front') {
+        // --- FRONT VIEW (Tilted toward viewer) ---
+        // 1. Base Housing (Rotated 90 deg - End Profile View)
+        drawBaseFrontProfile(ctx, cx, cy);
+
+        // 2. Staff + Orb Assembly (Foreshortened coming forward)
+        // Staff appears shorter, wider at top, and draws OVER the housing
+        const tiltFactor = 0.65; // Perspective length ratio
+        const foreshortenedLength = CONFIG.staffLength * tiltFactor;
+        
+        ctx.save();
+        ctx.translate(cx, cy);
+        // Tilted forward means moving slightly down/larger scale
+        drawStaffAndOrb(ctx, 0, 0, foreshortenedLength, CONFIG.staffWidth * 1.25, 1.2, true);
+        ctx.restore();
+
+        // 3. Foreground Front Housing Detail
+        drawArchFrontProfile(ctx, cx, cy);
+
+      } else if (viewType === 'back') {
+        // --- BACK VIEW (Tilted away from viewer) ---
+        // 1. Staff + Orb Assembly (Draws BEHIND the housing, smaller scale)
+        const tiltFactor = 0.55;
+        const foreshortenedLength = CONFIG.staffLength * tiltFactor;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        // Tilted away means staff goes up/narrower scale
+        ctx.rotate(Math.PI); // Invert axis to point upwards-backwards
+        drawStaffAndOrb(ctx, 0, 0, foreshortenedLength, CONFIG.staffWidth * 0.85, 0.8, false);
+        ctx.restore();
+
+        // 2. Base Housing (Rotated 90 deg - Rear End Profile View)
+        drawBaseFrontProfile(ctx, cx, cy);
+        drawArchFrontProfile(ctx, cx, cy);
+      }
+
+      ctx.restore();
+    }
+
+    // --- Draw Rigid Staff & Orb Locked along Central Longitudinal Axis ---
+    function drawStaffAndOrb(ctx, startX, startY, length, width, scaleOrb, isFront) {
+      // Longitudinal axis runs straight along negative Y-axis in local rotated space
+      const endY = -length;
+
+      // 1. Staff Shaft
+      const grad = ctx.createLinearGradient(-width/2, 0, width/2, 0);
+      grad.addColorStop(0, CONFIG.cWoodDark);
+      grad.addColorStop(0.5, CONFIG.cWoodMid);
+      grad.addColorStop(1, CONFIG.cWoodDark);
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.rect(-width/2, endY, width, length);
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#120a02';
+      ctx.stroke();
+
+      // 2. Middle Gem Band
+      const bandY = -length * 0.45;
+      ctx.fillStyle = CONFIG.cBand;
+      ctx.fillRect(-width * 0.6, bandY, width * 1.2, 16);
+      ctx.strokeRect(-width * 0.6, bandY, width * 1.2, 16);
+
+      // 3. Orb Socket Base (Strictly aligned at top of shaft endY)
+      ctx.fillStyle = CONFIG.cMetalMid;
+      ctx.beginPath();
+      ctx.moveTo(-width * 0.8, endY + 10);
+      ctx.lineTo(width * 0.8, endY + 10);
+      ctx.lineTo(width * 1.1, endY - 8);
+      ctx.lineTo(-width * 1.1, endY - 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // 4. Orb (Center locked directly on X=0, Y = endY - orbRadius)
+      const orbRadius = CONFIG.orbRadius * scaleOrb;
+      const orbCenterY = endY - orbRadius + 4;
+
+      // Orb Glow
+      const glowGrad = ctx.createRadialGradient(0, orbCenterY, 4, 0, orbCenterY, orbRadius * 1.8);
+      glowGrad.addColorStop(0, CONFIG.cOrbCore);
+      glowGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = glowGrad;
+      ctx.beginPath();
+      ctx.arc(0, orbCenterY, orbRadius * 1.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Solid Orb Body
+      const orbGrad = ctx.createRadialGradient(-orbRadius*0.3, orbCenterY - orbRadius*0.3, 2, 0, orbCenterY, orbRadius);
+      orbGrad.addColorStop(0, '#ffffff');
+      orbGrad.addColorStop(0.3, CONFIG.cOrbCore);
+      orbGrad.addColorStop(1, '#007799');
+
+      ctx.fillStyle = orbGrad;
+      ctx.beginPath();
+      ctx.arc(0, orbCenterY, orbRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#004455';
+      ctx.stroke();
+
+      // Highlight Specular Spec
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.beginPath();
+      ctx.arc(-orbRadius * 0.35, orbCenterY - orbRadius * 0.35, orbRadius * 0.25, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // --- Base Housing (Side Profile) ---
+    function drawBaseSide(ctx, cx, cy) {
+      const w = CONFIG.baseWidthSide;
+      const h = CONFIG.baseHeight;
+
+      // Trapezoid Wooden Base
+      ctx.fillStyle = CONFIG.cBaseMid;
+      ctx.beginPath();
+      ctx.moveTo(cx - w/2, cy);
+      ctx.lineTo(cx + w/2, cy);
+      ctx.lineTo(cx + w/2 - 25, cy - h);
+      ctx.lineTo(cx - w/2 + 25, cy - h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#1d0b06';
+      ctx.stroke();
+
+      // Wooden Arch Center
+      ctx.fillStyle = CONFIG.cBaseDark;
+      ctx.beginPath();
+      ctx.arc(cx, cy - h, CONFIG.archRadius, Math.PI, 0);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    function drawArchSide(ctx, cx, cy) {
+      const h = CONFIG.baseHeight;
+
+      // Metallic Outer Semi-Gear / Arch
+      ctx.fillStyle = CONFIG.cMetalMid;
+      ctx.beginPath();
+      ctx.arc(cx, cy - h, CONFIG.archRadius - 18, Math.PI, 0);
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#181d24';
+      ctx.stroke();
+
+      // Gear Teeth
+      ctx.fillStyle = CONFIG.cMetalDark;
+      const teeth = 9;
+      for(let i=0; i<teeth; i++) {
+        const a = Math.PI + (i / (teeth - 1)) * Math.PI;
+        const tx = cx + Math.cos(a) * (CONFIG.archRadius - 10);
+        const ty = (cy - h) + Math.sin(a) * (CONFIG.archRadius - 10);
+        ctx.beginPath();
+        ctx.arc(tx, ty, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      // Horizontal Metal Bar
+      ctx.fillStyle = CONFIG.cMetalLight;
+      ctx.fillRect(cx - 110, cy - h - 10, 220, 20);
+      ctx.strokeRect(cx - 110, cy - h - 10, 220, 20);
+
+      // Pivot Center Bolt
+      ctx.fillStyle = CONFIG.cMetalLight;
+      ctx.beginPath();
+      ctx.arc(cx, cy - h, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = CONFIG.cOrbCore;
+      ctx.beginPath();
+      ctx.arc(cx, cy - h, 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // --- Base Housing (Rotated 90 deg Front/Back Profile) ---
+    function drawBaseFrontProfile(ctx, cx, cy) {
+      const w = CONFIG.baseWidthFront;
+      const h = CONFIG.baseHeight;
+
+      // Narrow Trapezoid Base
+      ctx.fillStyle = CONFIG.cBaseMid;
+      ctx.beginPath();
+      ctx.moveTo(cx - w/2, cy);
+      ctx.lineTo(cx + w/2, cy);
+      ctx.lineTo(cx + w/2 - 12, cy - h);
+      ctx.lineTo(cx - w/2 + 12, cy - h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#1d0b06';
+      ctx.stroke();
+
+      // Narrow Arch Slot Profile
+      ctx.fillStyle = CONFIG.cBaseDark;
+      ctx.fillRect(cx - 20, cy - h - CONFIG.archRadius, 40, CONFIG.archRadius);
+      ctx.strokeRect(cx - 20, cy - h - CONFIG.archRadius, 40, CONFIG.archRadius);
+    }
+
+    function drawArchFrontProfile(ctx, cx, cy) {
+      const h = CONFIG.baseHeight;
+
+      // Front Bolt End Cap
+      ctx.fillStyle = CONFIG.cMetalLight;
+      ctx.fillRect(cx - 30, cy - h - 10, 60, 20);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#181d24';
+      ctx.strokeRect(cx - 30, cy - h - 10, 60, 20);
+
+      // Central Axle Bolt
+      ctx.fillStyle = CONFIG.cMetalDark;
+      ctx.beginPath();
+      ctx.arc(cx, cy - h, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = CONFIG.cOrbCore;
+      ctx.beginPath();
+      ctx.arc(cx, cy - h, 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // PNG Download Helper
+    function downloadPNG(canvasId, filename) {
+      const canvas = document.getElementById(canvasId);
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // Render All Views
+    window.onload = () => {
+      drawLever('cvs-left', 'left');
+      drawLever('cvs-right', 'right');
+      drawLever('cvs-front', 'front');
+      drawLever('cvs-back', 'back');
+    };
+  </script>
+</body>
+</html>

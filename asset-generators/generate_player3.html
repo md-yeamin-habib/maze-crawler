@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low-Poly Wizard Swimming Cycle Frame Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    .checkerboard {
+      background-image: 
+        linear-gradient(45deg, #1e293b 25%, transparent 25%), 
+        linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #1e293b 75%), 
+        linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8">
+
+  <!-- Header -->
+  <header class="text-center mb-6 max-w-xl">
+    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">Wizard Swimming Frame Generator</h1>
+    <p class="text-slate-400 text-sm">True 3D Z-axis forward pitch, broader paddle legs, continuous body attachment, and 6-frame swimming cycle.</p>
+  </header>
+
+  <!-- Main Grid -->
+  <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+
+    <!-- Preview Canvas Panel -->
+    <div class="md:col-span-6 lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center shadow-2xl">
+      <div class="checkerboard w-full max-w-[320px] h-[480px] rounded-xl border border-slate-700/60 overflow-hidden flex items-center justify-center relative shadow-inner">
+        <canvas id="wizardCanvas" width="512" height="768" class="w-full h-full object-contain"></canvas>
+      </div>
+
+      <button onclick="downloadPNG()" class="w-full mt-5 py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        Export Swimming Frame PNG
+      </button>
+    </div>
+
+    <!-- Controls Panel -->
+    <div class="md:col-span-6 lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col gap-6 max-h-[80vh] overflow-y-auto">
+      
+      <!-- 6-Frame Swim Cycle Presets -->
+      <div>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">6-Frame Swimming Cycle</h2>
+        <div class="grid grid-cols-3 sm:grid-cols-3 gap-2.5">
+          <button onclick="setSwimFrame(1)" id="frame-btn-1" class="frame-btn px-3 py-2.5 bg-indigo-600/20 border border-indigo-500 rounded-lg text-left transition-all">
+            <div class="text-[10px] text-indigo-300">Cycle 1/6</div>
+            <div class="text-xs font-semibold text-white">Swim Frame 1</div>
+          </button>
+          <button onclick="setSwimFrame(2)" id="frame-btn-2" class="frame-btn px-3 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition-all">
+            <div class="text-[10px] text-slate-400">Cycle 2/6</div>
+            <div class="text-xs font-semibold text-white">Swim Frame 2</div>
+          </button>
+          <button onclick="setSwimFrame(3)" id="frame-btn-3" class="frame-btn px-3 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition-all">
+            <div class="text-[10px] text-slate-400">Cycle 3/6</div>
+            <div class="text-xs font-semibold text-white">Swim Frame 3</div>
+          </button>
+          <button onclick="setSwimFrame(4)" id="frame-btn-4" class="frame-btn px-3 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition-all">
+            <div class="text-[10px] text-slate-400">Cycle 4/6</div>
+            <div class="text-xs font-semibold text-white">Swim Frame 4</div>
+          </button>
+          <button onclick="setSwimFrame(5)" id="frame-btn-5" class="frame-btn px-3 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition-all">
+            <div class="text-[10px] text-slate-400">Cycle 5/6</div>
+            <div class="text-xs font-semibold text-white">Swim Frame 5</div>
+          </button>
+          <button onclick="setSwimFrame(6)" id="frame-btn-6" class="frame-btn px-3 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition-all">
+            <div class="text-[10px] text-slate-400">Cycle 6/6</div>
+            <div class="text-xs font-semibold text-white">Swim Frame 6</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Fine-Tuning Controls -->
+      <div class="border-t border-slate-800 pt-5 space-y-4">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-2">Custom Swimming Adjustments</h2>
+
+        <!-- Z-Axis Pitch Angle -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-sm font-medium items-center">
+            <span class="text-slate-300">Z-Axis Forward Pitch (Leaning Away)</span>
+            <div class="flex items-center gap-1">
+              <input type="number" id="pitchAngleNum" min="-45" max="45" value="18" oninput="syncControl('pitchAngle', this.value)" class="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-indigo-400 font-mono text-right text-sm outline-none">
+              <span class="text-indigo-400 font-mono text-sm">°</span>
+            </div>
+          </div>
+          <input type="range" id="pitchAngle" min="-45" max="45" value="18" oninput="syncControl('pitchAngleNum', this.value)" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+        </div>
+
+        <!-- Left Arm Angle Control -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-sm font-medium items-center">
+            <span class="text-slate-300">Left Arm Angle</span>
+            <div class="flex items-center gap-1">
+              <input type="number" id="leftArmAngleNum" min="-180" max="180" value="25" oninput="syncControl('leftArmAngle', this.value)" class="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-indigo-400 font-mono text-right text-sm outline-none">
+              <span class="text-indigo-400 font-mono text-sm">°</span>
+            </div>
+          </div>
+          <input type="range" id="leftArmAngle" min="-180" max="180" value="25" oninput="syncControl('leftArmAngleNum', this.value)" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+        </div>
+
+        <!-- Right Arm Angle Control -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-sm font-medium items-center">
+            <span class="text-slate-300">Right Arm Angle</span>
+            <div class="flex items-center gap-1">
+              <input type="number" id="rightArmAngleNum" min="-180" max="180" value="25" oninput="syncControl('rightArmAngle', this.value)" class="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-indigo-400 font-mono text-right text-sm outline-none">
+              <span class="text-indigo-400 font-mono text-sm">°</span>
+            </div>
+          </div>
+          <input type="range" id="rightArmAngle" min="-180" max="180" value="25" oninput="syncControl('rightArmAngleNum', this.value)" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+        </div>
+
+        <!-- Left Leg Morph State (-1 to 1) -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-sm font-medium items-center">
+            <span class="text-slate-300">Left Leg Paddle Shape (Up/Rect/Inv)</span>
+            <div class="flex items-center gap-1">
+              <input type="number" id="leftLegMorphNum" min="-1" max="1" step="0.1" value="0" oninput="syncControl('leftLegMorph', this.value)" class="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-indigo-400 font-mono text-right text-sm outline-none">
+            </div>
+          </div>
+          <input type="range" id="leftLegMorph" min="-1" max="1" step="0.1" value="0" oninput="syncControl('leftLegMorphNum', this.value)" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+          <div class="flex justify-between text-[10px] text-slate-500 px-1">
+            <span>Upright Trap (-1)</span>
+            <span>Rect (0)</span>
+            <span>Inverted Trap (1)</span>
+          </div>
+        </div>
+
+        <!-- Right Leg Morph State (-1 to 1) -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-sm font-medium items-center">
+            <span class="text-slate-300">Right Leg Paddle Shape (Up/Rect/Inv)</span>
+            <div class="flex items-center gap-1">
+              <input type="number" id="rightLegMorphNum" min="-1" max="1" step="0.1" value="0" oninput="syncControl('rightLegMorph', this.value)" class="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-indigo-400 font-mono text-right text-sm outline-none">
+            </div>
+          </div>
+          <input type="range" id="rightLegMorph" min="-1" max="1" step="0.1" value="0" oninput="syncControl('rightLegMorphNum', this.value)" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+          <div class="flex justify-between text-[10px] text-slate-500 px-1">
+            <span>Upright Trap (-1)</span>
+            <span>Rect (0)</span>
+            <span>Inverted Trap (1)</span>
+          </div>
+        </div>
+
+        <!-- Outline Thickness -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-sm font-medium">
+            <span class="text-slate-300">Outline Stroke Width</span>
+            <span id="strokeVal" class="text-indigo-400 font-mono">3.5px</span>
+          </div>
+          <input type="range" id="strokeWidth" min="0" max="6" value="3.5" step="0.5" oninput="document.getElementById('strokeVal').innerText = this.value + 'px'; render();" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function syncControl(targetId, val) {
+      const numVal = parseFloat(val) || 0;
+      let clamped = numVal;
+      if (targetId.includes('Angle') || targetId.includes('pitch')) {
+        clamped = Math.max(-45, Math.min(45, numVal));
+        if (targetId.includes('Arm')) clamped = Math.max(-180, Math.min(180, numVal));
+      } else if (targetId.includes('Morph')) {
+        clamped = Math.max(-1, Math.min(1, numVal));
+      }
+      
+      document.getElementById(targetId).value = clamped;
+      document.getElementById(targetId + 'Num').value = clamped;
+      render();
+    }
+
+    function setSwimFrame(frameNum) {
+      document.querySelectorAll('.frame-btn').forEach((btn, idx) => {
+        if (idx + 1 === frameNum) {
+          btn.className = 'frame-btn px-3 py-2.5 bg-indigo-600/20 border border-indigo-500 rounded-lg text-left transition-all';
+        } else {
+          btn.className = 'frame-btn px-3 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-left transition-all';
+        }
+      });
+
+      // 6-Frame Swim Cycle with Z-Axis forward pitch:
+      const swimCycleData = {
+        1: { pitch: 18, arm: 32, lMorph: -1.0, rMorph: 1.0  },
+        2: { pitch: 15, arm: 25, lMorph: -0.5, rMorph: 0.5  },
+        3: { pitch: 12, arm: 15, lMorph: 0.0,  rMorph: 0.0  },
+        4: { pitch: 15, arm: 22, lMorph: 0.5,  rMorph: -0.5 },
+        5: { pitch: 18, arm: 30, lMorph: 1.0,  rMorph: -1.0 },
+        6: { pitch: 20, arm: 35, lMorph: 0.0,  rMorph: 0.0  }
+      };
+
+      const data = swimCycleData[frameNum];
+      syncControl('pitchAngle', data.pitch);
+      syncControl('leftArmAngle', data.arm);
+      syncControl('rightArmAngle', data.arm);
+      syncControl('leftLegMorph', data.lMorph);
+      syncControl('rightLegMorph', data.rMorph);
+    }
+
+    function render() {
+      const canvas = document.getElementById('wizardCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const pitchDeg = parseFloat(document.getElementById('pitchAngle').value);
+      const lAngleDeg = parseFloat(document.getElementById('leftArmAngle').value);
+      const rAngleDeg = parseFloat(document.getElementById('rightArmAngle').value);
+      const lMorph = parseFloat(document.getElementById('leftLegMorph').value);
+      const rMorph = parseFloat(document.getElementById('rightLegMorph').value);
+      const strokeW = parseFloat(document.getElementById('strokeWidth').value);
+
+      // Blue Robe + Hat Palette
+      const colors = {
+        robeLight: '#2e38c9',
+        robeDark: '#1e2694',
+        robeLapel: '#232cb3',
+        hatLight: '#2e38c9',
+        hatDark: '#1e2694',
+        hatBandLight: '#e67e22',
+        hatBandDark: '#d35400',
+        skinLight: '#ffe8d6',
+        skinDark: '#e0c2a8',
+        neckWhite: '#e2e8f0',
+        legs: '#232b38',
+        boots: '#111827',
+        outline: '#111827'
+      };
+
+      ctx.save();
+      ctx.translate(256, 680);
+
+      // --- TRUE Z-AXIS FORWARD PITCH TRANSFORMATION ---
+      // Squishing height via Y-scale to tilt character away into the screen (Z-axis lean)
+      const pitchRad = (pitchDeg * Math.PI) / 180;
+      const yScaleFactor = Math.cos(pitchRad); // Foreshortens vertical length simulating leaning away from viewer
+      ctx.scale(1.15, yScaleFactor);
+
+      ctx.lineWidth = strokeW;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+
+      // --- 1. BROADER PADDLE LEGS & BOOTS (Attached to Body Base) ---
+      const minLegW = 34;      // Broad rectangular width minimum (shorter side)
+      const maxLegW = 46;      // Flared side width
+      const legH = 90;
+      const legGap = 12;
+
+      function drawBroadMorphingLeg(xCenter, morphVal) {
+        // morphVal: -1 = Upright Trapezium (narrow top, wide bottom)
+        //            0 = Rectangle (fixed width = minLegW)
+        //            1 = Inverted Trapezium (wide top, narrow bottom)
+        let topW, botW;
+        if (morphVal < 0) {
+          // Upright trap: top = minLegW, bottom expands up to maxLegW
+          topW = minLegW;
+          botW = minLegW + Math.abs(morphVal) * (maxLegW - minLegW);
+        } else {
+          // Inverted trap: top expands up to maxLegW, bottom = minLegW
+          topW = minLegW + morphVal * (maxLegW - minLegW);
+          botW = minLegW;
+        }
+
+        ctx.fillStyle = colors.legs;
+        ctx.beginPath();
+        // Top edge rigidly anchored to body base (Y = -95)
+        ctx.moveTo(xCenter - topW / 2, -95);
+        ctx.lineTo(xCenter + topW / 2, -95);
+        ctx.lineTo(xCenter + botW / 2, 0);
+        ctx.lineTo(xCenter - botW / 2, 0);
+        ctx.closePath();
+        ctx.fill();
+        if (strokeW > 0) {
+          ctx.strokeStyle = colors.outline;
+          ctx.stroke();
+        }
+
+        // Boot perfectly matches bottom width of the leg
+        ctx.fillStyle = colors.boots;
+        ctx.fillRect(xCenter - botW / 2 - 4, 0, botW + 8, 22);
+        if (strokeW > 0) {
+          ctx.strokeRect(xCenter - botW / 2 - 4, 0, botW + 8, 22);
+        }
+      }
+
+      // Draw Left & Right broad paddle legs
+      drawBroadMorphingLeg(-legGap - minLegW / 2, lMorph);
+      drawBroadMorphingLeg(legGap + minLegW / 2, rMorph);
+
+
+      // --- 2. WIDER SWIMMING ROBE BODY ---
+      const robeTopY = -330;
+      const robeBottomY = -95;
+      const torsoW = 60;
+      const bottomW = 92;
+      const lapelW = 28;
+
+      ctx.fillStyle = colors.robeDark;
+      ctx.beginPath();
+      ctx.moveTo(0, robeTopY);
+      ctx.lineTo(torsoW, robeTopY);
+      ctx.lineTo(bottomW, robeBottomY);
+      ctx.lineTo(0, robeBottomY);
+      ctx.closePath();
+      ctx.fill();
+      if (strokeW > 0) { ctx.strokeStyle = colors.outline; ctx.stroke(); }
+
+      ctx.fillStyle = colors.robeLight;
+      ctx.beginPath();
+      ctx.moveTo(-torsoW, robeTopY);
+      ctx.lineTo(0, robeTopY);
+      ctx.lineTo(0, robeBottomY);
+      ctx.lineTo(-bottomW, robeBottomY);
+      ctx.closePath();
+      ctx.fill();
+      if (strokeW > 0) { ctx.stroke(); }
+
+      ctx.fillStyle = colors.robeLapel;
+      ctx.beginPath();
+      ctx.moveTo(-torsoW + 6, robeTopY);
+      ctx.lineTo(-torsoW + 6 + lapelW, robeTopY);
+      ctx.lineTo(-lapelW + 6, robeBottomY);
+      ctx.lineTo(-bottomW + 6, robeBottomY);
+      ctx.closePath();
+      ctx.fill();
+      if (strokeW > 0) { ctx.stroke(); }
+
+      ctx.fillStyle = colors.neckWhite;
+      ctx.fillRect(-26, robeTopY - 22, 52, 22);
+      if (strokeW > 0) { ctx.strokeRect(-26, robeTopY - 22, 52, 22); }
+
+
+      // --- 3. FORWARD-PITCHED HEAD ---
+      const headCenterY = robeTopY - 22 - 34;
+      const headRadiusX = 44;
+      const headRadiusY = 32;
+
+      ctx.save();
+      ctx.translate(0, headCenterY);
+      ctx.scale(1.1, 0.9);
+
+      ctx.fillStyle = colors.skinLight;
+      ctx.beginPath();
+      ctx.arc(0, 0, headRadiusX, Math.PI / 2, (3 * Math.PI) / 2);
+      ctx.fill();
+
+      ctx.fillStyle = colors.skinDark;
+      ctx.beginPath();
+      ctx.arc(0, 0, headRadiusX, -Math.PI / 2, Math.PI / 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, headRadiusX, 0, Math.PI * 2);
+      if (strokeW > 0) { ctx.strokeStyle = colors.outline; ctx.stroke(); }
+      ctx.restore();
+
+
+      // --- 4. INDEPENDENT ARMS ---
+      const sleeveL = 95;
+      const sleeveW = 34;
+      const handW = 20;
+      const handH = 22;
+      const shoulderY = robeTopY + 16;
+      const lShoulderX = -torsoW;
+      const rShoulderX = torsoW;
+
+      const lRad = (lAngleDeg * Math.PI) / 180;
+      const rRad = (rAngleDeg * Math.PI) / 180;
+
+      // Left Arm
+      ctx.save();
+      ctx.translate(lShoulderX, shoulderY);
+      ctx.rotate(Math.PI + lRad);
+
+      ctx.fillStyle = colors.robeLight;
+      ctx.fillRect(0, -sleeveW / 2, sleeveL, sleeveW);
+      if (strokeW > 0) { ctx.strokeStyle = colors.outline; ctx.strokeRect(0, -sleeveW / 2, sleeveL, sleeveW); }
+
+      ctx.fillStyle = colors.skinLight;
+      ctx.fillRect(sleeveL, -handH / 2, handW, handH);
+      if (strokeW > 0) { ctx.strokeRect(sleeveL, -handH / 2, handW, handH); }
+      ctx.restore();
+
+      // Right Arm
+      ctx.save();
+      ctx.translate(rShoulderX, shoulderY);
+      ctx.rotate(rRad);
+
+      ctx.fillStyle = colors.robeDark;
+      ctx.fillRect(0, -sleeveW / 2, sleeveL, sleeveW);
+      if (strokeW > 0) { ctx.strokeStyle = colors.outline; ctx.strokeRect(0, -sleeveW / 2, sleeveL, sleeveW); }
+
+      ctx.fillStyle = colors.skinDark;
+      ctx.fillRect(sleeveL, -handH / 2, handW, handH);
+      if (strokeW > 0) { ctx.strokeRect(sleeveL, -handH / 2, handW, handH); }
+      ctx.restore();
+
+
+      // --- 5. WIZARD HAT ---
+      const hatBaseY = headCenterY - 28;
+
+      ctx.fillStyle = colors.hatLight;
+      ctx.beginPath();
+      ctx.ellipse(0, hatBaseY, 116, 24, 0, Math.PI, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = colors.hatDark;
+      ctx.beginPath();
+      ctx.ellipse(0, hatBaseY, 116, 24, 0, 0, Math.PI);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.ellipse(0, hatBaseY, 116, 24, 0, 0, Math.PI * 2);
+      if (strokeW > 0) { ctx.strokeStyle = colors.outline; ctx.stroke(); }
+
+      ctx.fillStyle = colors.hatBandLight;
+      ctx.fillRect(-54, hatBaseY - 18, 54, 18);
+      ctx.fillStyle = colors.hatBandDark;
+      ctx.fillRect(0, hatBaseY - 18, 54, 18);
+      if (strokeW > 0) { ctx.strokeRect(-54, hatBaseY - 18, 108, 18); }
+
+      const coneHeight = 125;
+      ctx.fillStyle = colors.hatLight;
+      ctx.beginPath();
+      ctx.moveTo(0, hatBaseY - coneHeight);
+      ctx.lineTo(-54, hatBaseY - 18);
+      ctx.lineTo(0, hatBaseY - 18);
+      ctx.closePath();
+      ctx.fill();
+      if (strokeW > 0) { ctx.stroke(); }
+
+      ctx.fillStyle = colors.hatDark;
+      ctx.beginPath();
+      ctx.moveTo(0, hatBaseY - coneHeight);
+      ctx.lineTo(0, hatBaseY - 18);
+      ctx.lineTo(54, hatBaseY - 18);
+      ctx.closePath();
+      ctx.fill();
+      if (strokeW > 0) { ctx.stroke(); }
+
+      ctx.restore();
+    }
+
+    function downloadPNG() {
+      const canvas = document.getElementById('wizardCanvas');
+      const link = document.createElement('a');
+      link.download = 'wizard_swim_z_pitch.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    window.onload = () => {
+      setSwimFrame(1);
+    };
+  </script>
+</body>
+</html>

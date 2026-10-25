@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Studio - Pixel Art & Level Designer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom scrollbars for light theme */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 5px;
+            border: 2px solid #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Fixed grid cell sizing & Excel-like styling */
+        .grid-cell {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            min-height: 28px;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            transition: background-color 0.05s ease;
+            box-sizing: border-box;
+        }
+
+        /* Excel Headers */
+        .sticky-col-header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+        .sticky-row-header {
+            position: sticky;
+            left: 0;
+            z-index: 20;
+        }
+        .sticky-corner {
+            position: sticky;
+            top: 0;
+            left: 0;
+            z-index: 30;
+        }
+
+        /* Active Selected Cell Outline */
+        .cell-selected {
+            outline: 2px solid #16a34a !important;
+            outline-offset: -2px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 h-full flex flex-col font-sans overflow-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-5 shrink-0 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-emerald-600 rounded-lg text-white shadow-md shadow-emerald-200">
+                <i data-lucide="grid" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-slate-800 leading-none text-base">Maze Studio</h1>
+                <span class="text-xs text-slate-500 font-mono">Pixel Art & Matrix Array Editor</span>
+            </div>
+        </div>
+
+        <!-- Cell Hover Info & Value Toggle -->
+        <div class="flex items-center gap-4 text-xs">
+            <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-md border border-slate-200 text-slate-700 font-medium">
+                <i data-lucide="mouse-pointer" class="w-3.5 h-3.5 text-slate-400"></i>
+                <span id="active-cell-coord" class="font-mono">Cell [Row 0, Col 0] - Code: 0</span>
+            </div>
+            <button id="btn-toggle-numbers" class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded border border-slate-300 shadow-sm transition flex items-center gap-1.5 font-medium">
+                <i data-lucide="hash" class="w-3.5 h-3.5 text-slate-500"></i>
+                <span>Toggle Cell Values</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex flex-1 overflow-hidden">
+
+        <!-- Left Sidebar -->
+        <aside class="w-80 bg-white border-r border-slate-200 flex flex-col h-full shrink-0 shadow-sm">
+            <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <span class="font-semibold text-xs tracking-wider uppercase text-slate-600 flex items-center gap-2">
+                    <i data-lucide="sliders" class="w-4 h-4 text-emerald-600"></i> Studio Controls
+                </span>
+            </div>
+
+            <!-- Independent Scrollable Sidebar Content -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-6">
+
+                <!-- 1. Grid Dimensions -->
+                <div class="space-y-2">
+                    <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider block">Grid Dimensions</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <span class="text-[10px] text-slate-500 uppercase font-medium">Rows</span>
+                            <input id="input-rows" type="number" min="1" max="200" value="17" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-emerald-500 font-mono">
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-500 uppercase font-medium">Columns</span>
+                            <input id="input-cols" type="number" min="1" max="200" value="17" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-emerald-500 font-mono">
+                        </div>
+                    </div>
+                    <button id="btn-resize-grid" class="w-full mt-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-1.5 rounded border border-slate-300 transition font-medium flex items-center justify-center gap-1.5 shadow-sm">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-500"></i> Resize Grid
+                    </button>
+                </div>
+
+                <!-- 2. Pen State & Status Indicator -->
+                <div class="space-y-2 border-t border-slate-200 pt-4">
+                    <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider block">Pen Tool State</label>
+                    
+                    <button id="btn-toggle-pen" class="w-full py-2 px-3 rounded border text-xs font-semibold flex items-center justify-center gap-2 transition shadow-sm bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600">
+                        <i data-lucide="pen-tool" class="w-4 h-4"></i>
+                        <span id="pen-state-text">Pen DOWN (Filling Active)</span>
+                    </button>
+
+                    <!-- Active Pen Color Pill -->
+                    <div class="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-full flex items-center justify-between px-3">
+                        <div class="flex items-center gap-2.5">
+                            <div id="pen-pill-color" class="w-5 h-5 rounded-full border border-slate-300 shadow-inner" style="background-color: #000000;"></div>
+                            <span id="pen-pill-text" class="text-xs font-mono font-semibold text-slate-700">Code 1 (#000000)</span>
+                        </div>
+                        <span class="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-semibold">Active Pen</span>
+                    </div>
+                </div>
+
+                <!-- 3. Color Encodings List -->
+                <div class="space-y-3 border-t border-slate-200 pt-4">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider">Color Encodings</label>
+                        <button id="btn-add-encoding" class="text-xs text-emerald-600 hover:text-emerald-700 flex items-center gap-1 font-semibold">
+                            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Add New
+                        </button>
+                    </div>
+
+                    <!-- Independent Scrollbar for Encodings -->
+                    <div id="encodings-list" class="space-y-2 max-h-52 overflow-y-auto pr-1">
+                        <!-- Rendered Encoding Entries -->
+                    </div>
+                </div>
+
+                <!-- 4. Export / Import Section -->
+                <div class="space-y-2 border-t border-slate-200 pt-4">
+                    <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider block">Matrix Actions</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btn-open-export" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2 px-2 rounded font-semibold flex items-center justify-center gap-1.5 transition shadow-sm">
+                            <i data-lucide="file-code" class="w-3.5 h-3.5"></i> Export
+                        </button>
+                        <label class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs py-2 px-2 rounded font-semibold flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer">
+                            <i data-lucide="upload" class="w-3.5 h-3.5"></i> Import JSON
+                            <input type="file" id="input-import-json" accept=".json" class="hidden">
+                        </label>
+                    </div>
+                    <button id="btn-clear-canvas" class="w-full bg-white hover:bg-rose-50 text-rose-600 border border-slate-300 hover:border-rose-300 text-xs py-1.5 rounded font-medium transition flex items-center justify-center gap-1.5 mt-1">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Clear Grid (Set All 0)
+                    </button>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- Main Canvas Area (Dual Independent Scrollbars) -->
+        <main tabindex="0" id="canvas-container" class="flex-1 bg-slate-200 overflow-auto p-6 relative focus:outline-none">
+            <div id="grid-wrapper" class="inline-block bg-white border border-slate-300 rounded shadow-md overflow-hidden">
+                <div id="canvas-grid" class="grid bg-slate-300 gap-[1px]">
+                    <!-- Canvas Grid Cells -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 2D Matrix Export Modal -->
+    <div id="export-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white border border-slate-200 rounded-xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 rounded-t-xl">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="code" class="w-5 h-5 text-emerald-600"></i>
+                    <h3 class="text-sm font-bold text-slate-800">Exported 2D Matrix</h3>
+                </div>
+                <button id="btn-close-modal" class="text-slate-400 hover:text-slate-600 p-1 rounded">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-4 flex-1 overflow-y-auto bg-slate-900">
+                <pre id="matrix-preview" class="text-emerald-400 font-mono text-xs leading-relaxed select-all overflow-x-auto whitespace-pre"></pre>
+            </div>
+            <div class="p-4 border-t border-slate-200 flex items-center justify-end gap-3 bg-slate-50 rounded-b-xl">
+                <button id="btn-copy-matrix" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded border border-slate-300 flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy to Clipboard
+                </button>
+                <button id="btn-download-matrix" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Download File
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        // Default Encodings: 0 = White, 1 = Black
+        let encodings = [
+            { code: 0, color: "#ffffff" },
+            { code: 1, color: "#000000" }
+        ];
+
+        // Core Application State
+        let rows = 17;
+        let cols = 17;
+        let gridData = [];
+        let activeCode = 1; // Default to 1 (Black)
+        let penDown = true; // Pen Down mode active by default
+        let showValues = false;
+
+        // Active Selected Cell Navigation Position
+        let selectedCell = { r: 0, c: 0 };
+        let isMouseDown = false;
+
+        // Convert index to Excel Column Header (0 -> A, 25 -> Z, 26 -> AA)
+        function getExcelColLabel(index) {
+            let label = "";
+            let i = index;
+            while (i >= 0) {
+                label = String.fromCharCode((i % 26) + 65) + label;
+                i = Math.floor(i / 26) - 1;
+            }
+            return label;
+        }
+
+        // Initialize grid data with all 0s
+        function initGridData(rCount, cCount) {
+            rows = rCount;
+            cols = cCount;
+            gridData = [];
+            for (let r = 0; r < rows; r++) {
+                const row = new Array(cols).fill(0);
+                gridData.push(row);
+            }
+            selectedCell.r = Math.min(selectedCell.r, rows - 1);
+            selectedCell.c = Math.min(selectedCell.c, cols - 1);
+        }
+
+        function getEncoding(code) {
+            return encodings.find(e => e.code === code) || { code, color: "#cbd5e1" };
+        }
+
+        // Render Color Encodings Sidebar List
+        function renderEncodingsList() {
+            const container = document.getElementById("encodings-list");
+            container.innerHTML = "";
+
+            encodings.forEach(enc => {
+                const isSelected = enc.code === activeCode;
+                const card = document.createElement("div");
+                card.className = `p-2 rounded border flex items-center justify-between gap-2 transition ${
+                    isSelected ? "bg-emerald-50 border-emerald-500 shadow-sm" : "bg-white border-slate-200 hover:border-slate-300"
+                }`;
+
+                // Clicking anywhere on the card background selects this code, 
+                // but clicking directly into the input will not trigger it.
+                card.addEventListener("click", (e) => {
+                    if (e.target.tagName !== "INPUT") {
+                        setActiveCode(enc.code);
+                    }
+                });
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-2 flex-1">
+                        <input type="color" value="${enc.color}" onchange="updateEncodingColor(${enc.code}, this.value)" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent shrink-0">
+                        <div class="flex items-center gap-1">
+                            <span class="text-xs text-slate-500 font-semibold">Code:</span>
+                            <input type="text" inputmode="numeric" value="${enc.code}" onblur="commitEncodingCode(${enc.code}, this)" onkeydown="if(event.key==='Enter') this.blur()" class="w-16 bg-slate-100 border border-slate-300 rounded px-1.5 py-0.5 text-xs font-mono font-bold text-slate-800 text-center focus:outline-none focus:border-emerald-500">
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="setActiveCode(${enc.code})" class="px-2 py-1 text-[10px] font-semibold rounded ${isSelected ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}">
+                            ${isSelected ? "Active" : "Select"}
+                        </button>
+                        ${encodings.length > 1 ? `
+                            <button onclick="removeEncoding(${enc.code})" class="p-1 text-slate-400 hover:text-rose-500 rounded">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            lucide.createIcons();
+            updatePenPillUI();
+        }
+
+        function setActiveCode(code) {
+            activeCode = code;
+            renderEncodingsList();
+        }
+
+        function updateEncodingColor(oldCode, newColor) {
+            const enc = getEncoding(oldCode);
+            enc.color = newColor;
+            renderCanvas();
+            updatePenPillUI();
+        }
+
+        function commitEncodingCode(oldCode, inputElement) {
+            const rawVal = inputElement.value.trim();
+            const newCode = parseInt(rawVal, 10);
+
+            // Check if it's a valid integer
+            if (rawVal === "" || isNaN(newCode)) {
+                renderEncodingsList(); // Reset back to valid if empty/invalid
+                return;
+            }
+
+            // Enforce uniqueness across existing codes
+            if (encodings.some(e => e.code === newCode && e.code !== oldCode)) {
+                alert(`Code ${newCode} already exists. Please choose a unique integer.`);
+                renderEncodingsList(); // Reset back to valid
+                return;
+            }
+
+            // Update value in grid data matrix
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (gridData[r][c] === oldCode) {
+                        gridData[r][c] = newCode;
+                }
+            }
+        }
+
+        const enc = getEncoding(oldCode);
+        enc.code = newCode;
+        if (activeCode === oldCode) activeCode = newCode;
+
+        renderEncodingsList();
+        renderCanvas();
+    }
+
+        function removeEncoding(code) {
+            if (encodings.length <= 1) return;
+            encodings = encodings.filter(e => e.code !== code);
+            if (activeCode === code) {
+                activeCode = encodings[0].code;
+            }
+            renderEncodingsList();
+            renderCanvas();
+        }
+
+        function addEncoding() {
+            let nextCode = 0;
+            const existingCodes = encodings.map(e => e.code);
+            while (existingCodes.includes(nextCode)) {
+                nextCode++;
+            }
+            encodings.push({ code: nextCode, color: "#3b82f6" });
+            setActiveCode(nextCode);
+        }
+
+        function updatePenPillUI() {
+            const enc = getEncoding(activeCode);
+            document.getElementById("pen-pill-color").style.backgroundColor = enc.color;
+            document.getElementById("pen-pill-text").textContent = `Code ${enc.code} (${enc.color.toUpperCase()})`;
+        }
+
+        // Render Canvas Grid
+        function renderCanvas() {
+            const grid = document.getElementById("canvas-grid");
+            grid.style.gridTemplateColumns = `36px repeat(${cols}, 28px)`;
+            grid.innerHTML = "";
+
+            const corner = document.createElement("div");
+            corner.className = "sticky-corner bg-slate-100 border-r border-b border-slate-300 flex items-center justify-center text-[10px] font-mono text-slate-500 font-bold h-7";
+            corner.textContent = "R\\C";
+            grid.appendChild(corner);
+
+            for (let c = 0; c < cols; c++) {
+                const colHeader = document.createElement("div");
+                colHeader.className = "sticky-col-header bg-slate-100 border-r border-b border-slate-300 flex items-center justify-center text-[10px] font-mono text-slate-600 font-bold h-7";
+                colHeader.textContent = getExcelColLabel(c);
+                grid.appendChild(colHeader);
+            }
+
+            for (let r = 0; r < rows; r++) {
+                const rowHeader = document.createElement("div");
+                rowHeader.className = "sticky-row-header bg-slate-100 border-r border-b border-slate-300 flex items-center justify-center text-[10px] font-mono text-slate-600 font-bold h-7";
+                rowHeader.textContent = r + 1;
+                grid.appendChild(rowHeader);
+
+                for (let c = 0; c < cols; c++) {
+                    const code = gridData[r][c];
+                    const enc = getEncoding(code);
+
+                    const cell = document.createElement("div");
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.className = "grid-cell bg-white cursor-pointer";
+                    cell.style.backgroundColor = enc.color;
+
+                    if (showValues) {
+                        cell.textContent = code;
+                        cell.style.color = getLuminance(enc.color) > 0.5 ? "#000" : "#fff";
+                    }
+
+                    if (r === selectedCell.r && c === selectedCell.c) {
+                        cell.classList.add("cell-selected");
+                    }
+
+                    cell.addEventListener("mousedown", (e) => {
+                        e.preventDefault();
+                        isMouseDown = true;
+                        document.getElementById("canvas-container").focus();
+                        selectAndApply(r, c);
+                    });
+
+                    cell.addEventListener("mouseenter", () => {
+                        updateHoverInfo(r, c, gridData[r][c]);
+                        if (isMouseDown) {
+                            selectAndApply(r, c);
+                        }
+                    });
+
+                    grid.appendChild(cell);
+                }
+            }
+
+            updateHoverInfo(selectedCell.r, selectedCell.c, gridData[selectedCell.r][selectedCell.c]);
+        }
+
+        function getLuminance(hex) {
+            const c = hex.replace("#", "");
+            const rgb = parseInt(c, 16) || 0;
+            const r = (rgb >> 16) & 0xff;
+            const g = (rgb >>  8) & 0xff;
+            const b = (rgb >>  0) & 0xff;
+            return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        }
+
+        function updateHoverInfo(r, c, code) {
+            const label = getExcelColLabel(c);
+            document.getElementById("active-cell-coord").textContent = `Cell [Row ${r + 1}, Col ${label}] - Code: ${code}`;
+        }
+
+        function selectAndApply(r, c) {
+            selectedCell = { r, c };
+
+            if (penDown) {
+                gridData[r][c] = activeCode;
+            }
+
+            renderCanvas();
+        }
+
+        document.getElementById("canvas-container").addEventListener("keydown", (e) => {
+            let { r, c } = selectedCell;
+            let moved = false;
+
+            if (e.key === "ArrowUp") {
+                if (r > 0) { r--; moved = true; }
+            } else if (e.key === "ArrowDown") {
+                if (r < rows - 1) { r++; moved = true; }
+            } else if (e.key === "ArrowLeft") {
+                if (c > 0) { c--; moved = true; }
+            } else if (e.key === "ArrowRight") {
+                if (c < cols - 1) { c++; moved = true; }
+            }
+
+            if (moved) {
+                e.preventDefault();
+                selectAndApply(r, c);
+            }
+        });
+
+        document.addEventListener("mouseup", () => {
+            isMouseDown = false;
+        });
+
+        document.getElementById("btn-toggle-pen").addEventListener("click", () => {
+            penDown = !penDown;
+            const btn = document.getElementById("btn-toggle-pen");
+            const text = document.getElementById("pen-state-text");
+
+            if (penDown) {
+                btn.className = "w-full py-2 px-3 rounded border text-xs font-semibold flex items-center justify-center gap-2 transition shadow-sm bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600";
+                text.textContent = "Pen DOWN (Filling Active)";
+            } else {
+                btn.className = "w-full py-2 px-3 rounded border text-xs font-semibold flex items-center justify-center gap-2 transition shadow-sm bg-amber-500 hover:bg-amber-600 text-white border-amber-500";
+                text.textContent = "Pen UP (Selection Only)";
+            }
+        });
+
+        document.getElementById("btn-resize-grid").addEventListener("click", () => {
+            const r = parseInt(document.getElementById("input-rows").value) || 17;
+            const c = parseInt(document.getElementById("input-cols").value) || 17;
+            initGridData(r, c);
+            renderCanvas();
+        });
+
+        document.getElementById("btn-add-encoding").addEventListener("click", addEncoding);
+
+        document.getElementById("btn-toggle-numbers").addEventListener("click", () => {
+            showValues = !showValues;
+            renderCanvas();
+        });
+
+        document.getElementById("btn-clear-canvas").addEventListener("click", () => {
+            initGridData(rows, cols);
+            renderCanvas();
+        });
+
+        function generate2DMatrixString() {
+            const lines = gridData.map(row => {
+                const formattedRow = row.map(val => (val >= 0 ? ` ${val}` : `${val}`)).join(", ");
+                return "  [" + formattedRow + "]";
+            });
+            return "[\n" + lines.join(",\n") + "\n]";
+        }
+
+        // Modal Controls
+        document.getElementById("btn-open-export").addEventListener("click", () => {
+            document.getElementById("matrix-preview").textContent = generate2DMatrixString();
+            document.getElementById("export-modal").classList.remove("hidden");
+        });
+
+        document.getElementById("btn-close-modal").addEventListener("click", () => {
+            document.getElementById("export-modal").classList.add("hidden");
+        });
+
+        document.getElementById("btn-copy-matrix").addEventListener("click", () => {
+            const matrixStr = generate2DMatrixString();
+            navigator.clipboard.writeText(matrixStr).then(() => {
+                alert("2D Matrix copied to clipboard!");
+            }).catch(() => {
+                document.execCommand('copy');
+            });
+        });
+
+        document.getElementById("btn-download-matrix").addEventListener("click", () => {
+            const matrixStr = generate2DMatrixString();
+            const blob = new Blob([matrixStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "matrix_grid.json";
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Import JSON File Handler
+        document.getElementById("input-import-json").addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const parsed = JSON.parse(event.target.result);
+                    if (Array.isArray(parsed) && Array.isArray(parsed[0])) {
+                        gridData = parsed;
+                        rows = gridData.length;
+                        cols = gridData[0].length;
+
+                        // Update dimension inputs in UI
+                        document.getElementById("input-rows").value = rows;
+                        document.getElementById("input-cols").value = cols;
+
+                        // Auto-discover any custom codes present in the imported grid and assign random colors if new
+                        const uniqueCodes = [...new Set(gridData.flat())];
+                        uniqueCodes.forEach(code => {
+                            if (!encodings.some(e => e.code === code)) {
+                                // Assign distinct default colors for known special codes, or random fallback
+                                let color = "#3b82f6";
+                                if (code === 2) color = "#22c55e";      // Exit
+                                if (code === 3) color = "#ef4444";      // Start
+                                if (code === 4) color = "#c084fc";      // Refill
+                                if (code === 6) color = "#94a3b8";      // TNT / Explosives
+                                if (code === 7) color = "#f59e0b";      // Alt Refill
+                                encodings.push({ code, color });
+                            }
+                        });
+
+                        renderEncodingsList();
+                        renderCanvas();
+                        alert(`Successfully imported maze grid (${rows}x${cols})!`);
+                    } else {
+                        alert("Invalid JSON format. Expected a 2D array.");
+                    }
+                } catch (err) {
+                    alert("Failed to parse JSON file.");
+                    console.error(err);
+                }
+                // Reset file input value so re-importing the same file works smoothly
+                e.target.value = "";
+            };
+            reader.readAsText(file);
+        });
+
+        // App Initial Load
+        initGridData(17, 17);
+        renderEncodingsList();
+        renderCanvas();
+    </script>
+</body>
+</html>

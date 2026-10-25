@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Crawler - 3D Dungeon Explorer</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="main-container">
+        <div id="canvas-container">
+            <!-- 8-Point Compass Widget (Top-Left) -->
+            <div id="compassWidget">
+                <div id="compassRose">
+                    <span class="compass-n">N</span>
+                    <span class="compass-ne">NE</span>
+                    <span class="compass-e">E</span>
+                    <span class="compass-se">SE</span>
+                    <span class="compass-s">S</span>
+                    <span class="compass-sw">SW</span>
+                    <span class="compass-w">W</span>
+                    <span class="compass-nw">NW</span>
+                    <div id="compassNeedle">
+                        <div class="needle-head"></div>
+                        <div class="needle-tail"></div>
+                        <div class="needle-center"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HUD Overlay (Horizontal Arcade Layout) -->
+            <div id="hudOverlay">
+                <!-- Health Bar (Directly attached heart) -->
+                <div class="hud-item" id="healthHud">
+                    <svg class="hud-icon-svg" width="36" height="32" viewBox="0 0 24 24">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#ef4444" stroke="#000000" stroke-width="2"/>
+                    </svg>
+                    <div class="hud-bar-container">
+                        <div class="hud-bar-fill" id="healthFill" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <!-- Magic Bar (Directly attached round-bottom flask with cork and deep sparkly blue potion) -->
+                <div class="hud-item disabled" id="magicHud">
+                    <svg class="hud-icon-svg" width="32" height="34" viewBox="0 0 24 24">
+                        <!-- Wooden Cork -->
+                        <rect x="10" y="2" width="4" height="3" fill="#854d0e" stroke="#000000" stroke-width="1.5" rx="0.5"/>
+                        <!-- Flask Neck & Round-Bottom Body -->
+                        <path d="M11 5h2v3l3 4.5a6 6 0 1 1-10 0L9 8V5h2z" fill="#0f172a" stroke="#000000" stroke-width="2"/>
+                        <!-- Half-Filled Deep Sparkly Blue Potion -->
+                        <path d="M6.2 13.5a6 6 0 0 0 11.6 0L15 9.5H9l-2.8 4z" fill="url(#potionGrad)"/>
+                        <!-- Potion Sparkles -->
+                        <circle cx="10" cy="15" r="0.9" fill="#fef08a"/>
+                        <circle cx="14" cy="16.5" r="0.7" fill="#fef08a"/>
+                        <defs>
+                            <linearGradient id="potionGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#38bdf8"/>
+                                <stop offset="50%" stop-color="#0284c7"/>
+                                <stop offset="100%" stop-color="#0369a1"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="hud-bar-container">
+                        <div class="hud-bar-fill magic-fill" id="magicFill" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <!-- Clean Arcade Timer readout -->
+                <div class="hud-item" id="timerHud">
+                    <span id="hudTimerText">00:00</span>
+                </div>
+            </div>
+
+            <canvas id="navCanvas"></canvas>
+        </div>
+    </div>
+
+    <div id="sidebar">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+            <h2>Maze Crawler</h2>
+            <div style="display: flex; gap: 10px;">
+                <!-- Clean Trophy Icon -->
+                <button id="highScoresBtn" class="top-icon-btn" title="High Scores">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18 2H6v2H2v4c0 2.21 1.79 4 4 4h1c.75 1.43 2.11 2.58 3.79 2.94C10.35 15.48 10 16.69 10 18v2H7v2h10v-2h-3v-2c0-1.31-.35-2.52-.79-3.06 1.68-.36 3.04-1.51 3.79-2.94h1c2.21 0 4-1.79 4-4V4h-4V2zm-14 6V6h2v3.52C5.35 9.28 4.66 8.68 4 8zm16 0c-.66.68-1.35 1.28-2 1.52V6h2v2z"/>
+                    </svg>
+                </button>
+                
+                <!-- Clean Vector Bug Icon (Replaces the thick font icon) -->
+                <button id="cheatConsoleBtn" class="top-icon-btn" title="Cheat Console">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 8h-2.81c-.45-.78-1.07-1.45-1.82-1.96L17 4.41 15.59 3l-2.17 2.17C12.56 5.06 12.3 5 12 5s-.56.06-.82.17L9 3 7.59 4.41l1.63 1.63c-.75.51-1.37 1.18-1.82 1.96H4v2h2.08C6.03 10.33 6 10.66 6 11v1H4v2h2v1c0 .34.03.67.08 1H4v2h2.81c1.04 1.79 2.97 3 5.19 3s4.15-1.21 5.19-3H20v-2h-2.08c.05-.33.08-.66.08-1v-1h2v-2h-2v-1c0-.34-.03-.67-.08-1H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Level Selector (Levels 1-5) -->
+        <select id="levelSelect">
+            <option value="1" selected>Level 1 (Magic Tower Library)</option>
+            <option value="2">Level 2 (Underwater Cavern)</option>
+            <option value="3">Level 3 (Toxic Tunnels)</option>
+            <option value="4">Level 4 (Glacial Cave)</option>
+            <option value="5">Level 5 (Ancient Labyrinth)</option>
+        </select>
+        
+        <!-- Square Mini-Map Container -->
+        <div id="minimapContainer" style="position: relative; width: 100%; aspect-ratio: 1 / 1;">
+            <canvas id="minimapCanvas"></canvas>
+            <div id="minimapIconOverlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden;"></div>
+            
+            <!-- Pill-Shaped Zoom Toolbar (Middle of Right Edge) -->
+            <div id="minimapToolbar" class="map-pill-toolbar">
+                <button id="zoomInBtn" class="pill-tool-btn" title="Zoom In">+</button>
+                <div class="pill-divider"></div>
+                <button id="zoomOutBtn" class="pill-tool-btn" title="Zoom Out">-</button>
+            </div>
+
+            <!-- Brief Zoom % Indicator Toast Badge -->
+            <div id="zoomToastBadge" class="zoom-toast-badge">100%</div>
+        </div>
+
+        <!-- Navigation Controls Panel (Fixed Height) -->
+        <div class="panel" id="controlsPanel">
+            <div id="dpadContainer">
+                <div class="dpad-row">
+                    <button class="dpad-btn" id="btnUp" title="Move Forward">▲</button>
+                </div>
+                <div class="dpad-row">
+                    <button class="dpad-btn" id="btnLeft" title="Turn Left">◀</button>
+                    <button class="dpad-btn center-dot" id="btnCenter" title="Fire / Interact">◯</button>
+                    <button class="dpad-btn" id="btnRight" title="Turn Right">▶</button>
+                </div>
+                <div class="dpad-row">
+                    <button class="dpad-btn" id="btnDown" title="Turn Around">▼</button>
+                </div>
+            </div>
+            <div class="action-buttons-row">
+                <button id="restartBtn" class="action-btn" title="Restart Level">Restart</button>
+                <button id="hintBtn" class="action-btn" title="Use Hint (H)">Hints</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="gameCustomTooltip">
+        <div class="tt-title" id="ttTitle"></div>
+        <div class="tt-desc" id="ttDesc"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Clustered 3-Segment Crab Appendages Generator - Vertical Y Lift</title>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 { color: #ef4444; margin-bottom: 5px; }
+        p { color: #94a3b8; font-size: 14px; margin-top: 0; }
+        .controls {
+            margin: 20px 0;
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 8px;
+            display: inline-block;
+            border: 1px solid #334155;
+        }
+        button {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: #fef3c7;
+            border: 1px solid #fca5a5;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover { opacity: 0.9; }
+        button.active { border: 2px solid #ffffff; box-shadow: 0 0 14px rgba(239, 68, 68, 0.9); }
+        .canvas-container {
+            background: #ffffff;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 10px;
+            display: inline-block;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            margin-top: 10px;
+        }
+        canvas { display: block; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <h1>Clustered 3-Segment Crab Appendages Generator</h1>
+    <p>Vertical Y-Axis Lift for 2nd Leg (Nearer & Further Sets)</p>
+
+    <div class="controls">
+        <button id="btnNearNormal" onclick="setView('near_normal')" class="active">1. Nearer Legs (Grounded)</button>
+        <button id="btnNearLifted" onclick="setView('near_lifted')">2. Nearer Legs (2nd Lifted Y-Axis)</button>
+        <button id="btnFarNormal" onclick="setView('far_normal')">3. Further Legs (Grounded)</button>
+        <button id="btnFarLifted" onclick="setView('far_lifted')">4. Further Legs (2nd Lifted Y-Axis)</button>
+        <br><br>
+        <button onclick="downloadAsset()" style="background: linear-gradient(135deg, #059669, #10b981);">Download Current Legs PNG</button>
+    </div>
+
+    <br>
+    <div class="canvas-container">
+        <canvas id="crabCanvas" width="500" height="480"></canvas>
+    </div>
+
+    <script>
+        let currentView = 'near_normal';
+
+        function setView(viewType) {
+            currentView = viewType;
+            document.getElementById('btnNearNormal').className = (viewType === 'near_normal') ? 'active' : '';
+            document.getElementById('btnNearLifted').className = (viewType === 'near_lifted') ? 'active' : '';
+            document.getElementById('btnFarNormal').className = (viewType === 'far_normal') ? 'active' : '';
+            document.getElementById('btnFarLifted').className = (viewType === 'far_lifted') ? 'active' : '';
+            renderAsset();
+        }
+
+        function renderAsset() {
+            const canvas = document.getElementById('crabCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            
+            let scale = 2.2;
+            ctx.scale(scale, scale);
+
+            const colPrimary   = '#dc2626';
+            const colShadow    = '#b91c1c';
+            const colDeepCore  = '#991b1b';
+            const colOutline   = '#450a0a';
+
+            function drawPolygon(points, fillColor) {
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+                for (let p = 1; p < points.length; p++) {
+                    ctx.lineTo(points[p].x, points[p].y);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = colOutline;
+                ctx.lineWidth = 1.1;
+                ctx.stroke();
+            }
+
+            const baseY = -15;
+            let isNear = currentView.startsWith('near');
+            let isLifted = currentView.endsWith('lifted');
+
+            if (isNear) {
+                // --- NEARER SET OF LEGS ---
+                for (let i = 0; i < 4; i++) {
+                    let baseX = -12 + (i * 8); 
+                    let tipX = -45 + (i * 30); 
+                    let midX = (baseX + tipX) / 2;
+
+                    // Vertical Y-axis lift offset for second appendage (i === 1)
+                    let yOffset = (isLifted && i === 1) ? -14 : 0;
+
+                    // Segment 1 (Upper block - attached to base)
+                    drawPolygon([
+                        {x: baseX - 3, y: baseY}, 
+                        {x: baseX + 5, y: baseY}, 
+                        {x: midX + 4, y: baseY + 20 + yOffset}, 
+                        {x: midX - 4, y: baseY + 16 + yOffset}
+                    ], colPrimary);
+
+                    // Segment 2 (Middle block)
+                    drawPolygon([
+                        {x: midX - 4, y: baseY + 16 + yOffset}, 
+                        {x: midX + 4, y: baseY + 20 + yOffset}, 
+                        {x: tipX + 6, y: baseY + 38 + yOffset}, 
+                        {x: tipX - 2, y: baseY + 34 + yOffset}
+                    ], colShadow);
+
+                    // Segment 3 (Lower block / tip)
+                    drawPolygon([
+                        {x: tipX - 2, y: baseY + 34 + yOffset}, 
+                        {x: tipX + 6, y: baseY + 38 + yOffset}, 
+                        {x: tipX + 4, y: baseY + 52 + yOffset}, 
+                        {x: tipX - 4, y: baseY + 48 + yOffset}
+                    ], colDeepCore);
+                }
+            } else {
+                // --- FURTHER SET OF LEGS ---
+                for (let i = 0; i < 4; i++) {
+                    let baseX = -12 + (i * 8); 
+                    let tipX = -45 + (i * 30); 
+                    let midX = (baseX + tipX) / 2;
+
+                    // Vertical Y-axis lift offset for second appendage (i === 1)
+                    let yOffset = (isLifted && i === 1) ? -14 : 0;
+
+                    // Segment 1 (Upper block - attached to base)
+                    drawPolygon([
+                        {x: baseX - 3, y: baseY}, 
+                        {x: baseX + 5, y: baseY}, 
+                        {x: midX + 4, y: baseY - 20 + yOffset}, 
+                        {x: midX - 4, y: baseY - 16 + yOffset}
+                    ], colDeepCore);
+
+                    // Segment 2 (Middle block)
+                    drawPolygon([
+                        {x: midX - 4, y: baseY - 16 + yOffset}, 
+                        {x: midX + 4, y: baseY - 20 + yOffset}, 
+                        {x: tipX + 6, y: baseY - 38 + yOffset}, 
+                        {x: tipX - 2, y: baseY - 34 + yOffset}
+                    ], colShadow);
+
+                    // Segment 3 (Lower block / tip)
+                    drawPolygon([
+                        {x: tipX - 2, y: baseY - 34 + yOffset}, 
+                        {x: tipX + 6, y: baseY - 38 + yOffset}, 
+                        {x: tipX + 4, y: baseY - 52 + yOffset}, 
+                        {x: tipX - 4, y: baseY - 48 + yOffset}
+                    ], colPrimary);
+                }
+            }
+
+            ctx.restore();
+        }
+
+        function downloadAsset() {
+            const canvas = document.getElementById('crabCanvas');
+            const link = document.createElement('a');
+            link.download = `crab_legs_${currentView}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        window.onload = renderAsset;
+    </script>
+
+</body>
+</html>

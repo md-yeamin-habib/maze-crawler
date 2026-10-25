@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Clean Underwater Dike & Seabed Wall Texture Generator</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        h2, h3 { margin-bottom: 5px; text-align: center; }
+        .section {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            width: 95%;
+            max-width: 1100px;
+        }
+        .grid {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .card {
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        canvas {
+            background: #000;
+            border: 1px dashed #475569;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: block;
+            image-rendering: pixelated;
+        }
+        button {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🌊 Clean Underwater Wall Texture Generator</h2>
+    <p style="color: #94a3b8; margin-top: 0;">Level 2 Wall Textures (1 Wide x 3 High Blocks Proportions)</p>
+
+    <!-- SECTION 1: OUTER WALL TEXTURE -->
+    <div class="section">
+        <h3>Outer Boundary Wall (Dull Grayish-Dark Blue Blend)</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>Outer Wall Texture</h4>
+                <canvas id="outer_wall" width="64" height="192"></canvas>
+                <button onclick="downloadAsset('outer_wall', 'library_outer_wall.png')">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2: INNER WALL VARIATIONS (1-4) -->
+    <div class="section">
+        <h3>Inner Maze Walls (Unified Seabed Palette with Subtle Variations)</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>Variation 1</h4>
+                <canvas id="inner_1" width="64" height="192"></canvas>
+                <button onclick="downloadAsset('inner_1', 'stone_wall_v1.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>Variation 2</h4>
+                <canvas id="inner_2" width="64" height="192"></canvas>
+                <button onclick="downloadAsset('inner_2', 'stone_wall_v2.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>Variation 3</h4>
+                <canvas id="inner_3" width="64" height="192"></canvas>
+                <button onclick="downloadAsset('inner_3', 'stone_wall_v3.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>Variation 4</h4>
+                <canvas id="inner_4" width="64" height="192"></canvas>
+                <button onclick="downloadAsset('inner_4', 'stone_wall_v4.png')">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function pseudoNoise(seed) {
+            let x = Math.sin(seed++) * 10000;
+            return x - Math.floor(x);
+        }
+
+        // --- OUTER WALL: DULL GRAYISH-DARK BLUE & CHARCOAL BLEND ---
+        function generateOuterWall(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            const mutedGrays = ['#161b20', '#1e2329', '#283038', '#1c2229'];
+
+            let seed = 42;
+            for (let y = 0; y < h; y += 2) {
+                for (let x = 0; x < w; x += 2) {
+                    let n = pseudoNoise(seed++);
+                    let colorIdx = Math.floor(n * mutedGrays.length);
+                    ctx.fillStyle = mutedGrays[colorIdx];
+                    ctx.fillRect(x, y, 2, 2);
+                }
+            }
+        }
+
+        // --- INNER WALLS: UNIFIED PALETTE WITH SUBTLE MICRO-VARIATIONS ---
+        function generateInnerWall(canvasId, variant) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            const baseColor = '#06394a';
+            const midColor = '#085066';
+            const highlightColor = '#0e7490';
+            const stippleColor = '#15803d';
+
+            ctx.fillStyle = baseColor;
+            ctx.fillRect(0, 0, w, h);
+
+            let seed = variant * 1337;
+
+            for (let y = 0; y < h; y += 2) {
+                for (let x = 0; x < w; x += 2) {
+                    let n = pseudoNoise(seed++);
+                    if (n > 0.6) {
+                        ctx.fillStyle = midColor;
+                        ctx.fillRect(x, y, 2, 2);
+                    }
+                }
+            }
+
+            ctx.fillStyle = highlightColor;
+            ctx.globalAlpha = 0.25;
+            for (let i = 0; i < 6; i++) {
+                let cx = (w * 0.2) + (pseudoNoise(seed++) * (w * 0.6));
+                let cy = (h * 0.1) * i + (variant * 10);
+                let cr = 12 + (variant * 2);
+                ctx.beginPath();
+                ctx.arc(cx, cy % h, cr, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1.0;
+
+            ctx.fillStyle = stippleColor;
+            ctx.globalAlpha = 0.35;
+            for (let i = 0; i < 15 + (variant * 3); i++) {
+                let px = (seed * i * 7) % w;
+                let py = (seed * i * 13) % h;
+                ctx.fillRect(px, py, 2, 2);
+            }
+            ctx.globalAlpha = 1.0;
+        }
+
+        generateOuterWall('outer_wall');
+        generateInnerWall('inner_1', 1);
+        generateInnerWall('inner_2', 2);
+        generateInnerWall('inner_3', 3);
+        generateInnerWall('inner_4', 4);
+
+        function downloadAsset(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+
+</body>
+</html>

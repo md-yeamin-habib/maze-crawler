@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Low-Poly Wizard Hurt & Death Generator (Expanded)</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        h2, h3 { margin-bottom: 5px; text-align: center; }
+        .section {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            width: 95%;
+            max-width: 1200px;
+        }
+        .grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .card {
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+        canvas {
+            background: transparent;
+            border: 1px dashed #475569;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        button {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 6px 10px;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>💥 Low-Poly Wizard Hurt & Death Generator (Blue Robe)</h2>
+    <p style="color: #94a3b8; margin-top: 0;">Complete Damage & Progressive Ash Dissolve States (Pure Gray Particles)</p>
+
+    <!-- RED TINTED SET -->
+    <div class="section">
+        <h3>Red Tinted Frames (Hit Flash / Double Flash Phase)</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>1. Red Tint Hurt</h4>
+                <canvas id="red_hurt" width="280" height="280"></canvas>
+                <button onclick="downloadAsset('red_hurt', 'player_blue_red_hurt.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>2. Red Tilt Slant</h4>
+                <canvas id="red_tilt" width="280" height="280"></canvas>
+                <button onclick="downloadAsset('red_tilt', 'player_blue_red_tilt.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>3. Red Ash Burst (Dense)</h4>
+                <canvas id="red_ash1" width="280" height="280"></canvas>
+                <button onclick="downloadAsset('red_ash1', 'player_blue_red_ash1.png')">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REGULAR COLORED SET -->
+    <div class="section">
+        <h3>Regular Colored Frames (Standard Stance Phase)</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>1. Regular Hurt Pose</h4>
+                <canvas id="reg_hurt" width="280" height="280"></canvas>
+                <button onclick="downloadAsset('reg_hurt', 'player_blue_reg_hurt.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>2. Regular Tilt Slant</h4>
+                <canvas id="reg_tilt" width="280" height="280"></canvas>
+                <button onclick="downloadAsset('reg_tilt', 'player_blue_reg_tilt.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>3. Regular Ash Burst (Dense)</h4>
+                <canvas id="reg_ash1" width="280" height="280"></canvas>
+                <button onclick="downloadAsset('reg_ash1', 'player_blue_reg_ash1.png')">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ASH DISSOLVE SEQUENCE (PURE GRAY PARTICLES) -->
+    <div class="section">
+        <h3>Ash Particle Dissolve Sequence (Pure Gray Shades)</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>Stage 1: Heavy Ash</h4>
+                <canvas id="ash_heavy" width="280" height="280"></canvas>
+                <button onclick="downloadAsset('ash_heavy', 'ash_heavy.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>Stage 2: Half Ash</h4>
+                <canvas id="ash_half" width="280" height="280"></canvas>
+                <button onclick="downloadAsset('ash_half', 'ash_half.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>Stage 3: Slight Ash</h4>
+                <canvas id="ash_slight" width="280" height="280"></canvas>
+                <button onclick="downloadAsset('ash_slight', 'ash_slight.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>Stage 4: Vanished</h4>
+                <canvas id="ash_vanished" width="280" height="280"></canvas>
+                <button onclick="downloadAsset('ash_vanished', 'ash_vanished.png')">Download Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Draw Wizard Base Model (Lowered Y origin to prevent hat clipping)
+        function drawWizardBase(ctx, cx, cy, config, isRedTinted, slantAngle) {
+            ctx.save();
+
+            if (slantAngle) {
+                ctx.translate(cx, cy);
+                ctx.rotate(slantAngle);
+                ctx.translate(-cx, -cy);
+            }
+
+            const robeMain = isRedTinted ? '#991b1b' : config.robeMain;
+            const robeShadow = isRedTinted ? '#7f1d1d' : config.robeShadow;
+            const pantsColor = isRedTinted ? '#450a0a' : config.pantsColor;
+            const bootColor = isRedTinted ? '#290505' : config.bootColor;
+            const skinColor = isRedTinted ? '#fca5a5' : config.skinColor;
+            const neckColor = isRedTinted ? '#fecaca' : config.neckColor;
+            const hatBand = isRedTinted ? '#dc2626' : config.hatBand;
+            const strokeColor = isRedTinted ? '#450a0a' : config.strokeColor;
+            const strokeWidth = 1.5;
+
+            // --- 1. LEGS & BOOTS ---
+            ctx.fillStyle = pantsColor;
+            ctx.fillRect(cx - 18, cy - 110, 12, 90);
+            ctx.fillRect(cx + 6, cy - 110, 12, 90);
+
+            ctx.fillStyle = bootColor;
+            ctx.fillRect(cx - 20, cy - 20, 16, 20);
+            ctx.fillRect(cx + 4, cy - 20, 16, 20);
+
+            // --- 2. ROBE BODY ---
+            ctx.fillStyle = robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 150);
+            ctx.lineTo(cx + 22, cy - 150);
+            ctx.lineTo(cx + 36, cy - 54);
+            ctx.lineTo(cx - 36, cy - 54);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 150);
+            ctx.lineTo(cx, cy - 145);
+            ctx.lineTo(cx - 6, cy - 54);
+            ctx.lineTo(cx - 36, cy - 54);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = strokeWidth;
+            ctx.stroke();
+
+            // --- 3. SLEEVES & ARMS ---
+            ctx.fillStyle = robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 146);
+            ctx.lineTo(cx - 52, cy - 115);
+            ctx.lineTo(cx - 40, cy - 105);
+            ctx.lineTo(cx - 22, cy - 120);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx + 22, cy - 146);
+            ctx.lineTo(cx + 52, cy - 115);
+            ctx.lineTo(cx + 40, cy - 105);
+            ctx.lineTo(cx + 22, cy - 120);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = skinColor;
+            ctx.beginPath();
+            ctx.moveTo(cx - 52, cy - 115);
+            ctx.lineTo(cx - 58, cy - 108);
+            ctx.lineTo(cx - 46, cy - 98);
+            ctx.lineTo(cx - 40, cy - 105);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(cx + 52, cy - 115);
+            ctx.lineTo(cx + 58, cy - 108);
+            ctx.lineTo(cx + 46, cy - 98);
+            ctx.lineTo(cx + 40, cy - 105);
+            ctx.closePath();
+            ctx.fill();
+
+            // --- 4. NECK & HEAD ---
+            ctx.fillStyle = neckColor;
+            ctx.fillRect(cx - 6, cy - 162, 12, 14);
+
+            ctx.fillStyle = skinColor;
+            ctx.beginPath();
+            ctx.arc(cx, cy - 176, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = strokeWidth;
+            ctx.stroke();
+
+            // --- 5. COMPACT WIZARD HAT ---
+            ctx.fillStyle = robeMain;
+            ctx.beginPath();
+            ctx.ellipse(cx, cy - 186, 32, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = strokeWidth;
+            ctx.stroke();
+
+            ctx.fillStyle = hatBand;
+            ctx.beginPath();
+            ctx.ellipse(cx, cy - 188, 20, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx - 18, cy - 188);
+            ctx.lineTo(cx + 18, cy - 188);
+            ctx.lineTo(cx + 4, cy - 232);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = strokeWidth;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // Draw Pure Gray Ash Particles
+        function drawPureGrayAsh(ctx, cx, cy, count, spreadX, spreadY) {
+            // Palette restricted strictly to low-poly gray shades
+            const grayShades = ['#1e293b', '#334155', '#475569', '#64748b', '#94a3b8', '#cbd5e1'];
+
+            for (let i = 0; i < count; i++) {
+                let px = cx + (Math.random() - 0.5) * spreadX;
+                let py = (cy - 110) + (Math.random() - 0.5) * spreadY;
+                let size = Math.random() * 4 + 2;
+
+                ctx.fillStyle = grayShades[Math.floor(Math.random() * grayShades.length)];
+                ctx.fillRect(px, py, size, size);
+            }
+        }
+
+        const blueConfig = {
+            robeMain: '#312e81',
+            robeShadow: '#3730a3',
+            pantsColor: '#1e1b4b',
+            bootColor: '#0f172a',
+            skinColor: '#ffedd5',
+            neckColor: '#e2e8f0',
+            hatBand: '#d97706',
+            strokeColor: '#0f172a'
+        };
+
+        // Center origin adjusted to cy = 230 to ensure 0 hat clipping
+        const cx = 140;
+        const cy = 230;
+
+        // --- 1. RED TINTED SET ---
+        const rHurt = document.getElementById('red_hurt').getContext('2d');
+        drawWizardBase(rHurt, cx, cy, blueConfig, true, 0);
+
+        const rTilt = document.getElementById('red_tilt').getContext('2d');
+        drawWizardBase(rTilt, cx, cy, blueConfig, true, 0.45);
+
+        const rAsh1 = document.getElementById('red_ash1').getContext('2d');
+        drawWizardBase(rAsh1, cx, cy, blueConfig, true, 0.65);
+        drawPureGrayAsh(rAsh1, cx + 25, cy, 60, 80, 120);
+
+        // --- 2. REGULAR COLORED SET ---
+        const gHurt = document.getElementById('reg_hurt').getContext('2d');
+        drawWizardBase(gHurt, cx, cy, blueConfig, false, 0);
+
+        const gTilt = document.getElementById('reg_tilt').getContext('2d');
+        drawWizardBase(gTilt, cx, cy, blueConfig, false, 0.45);
+
+        const gAsh1 = document.getElementById('reg_ash1').getContext('2d');
+        drawWizardBase(gAsh1, cx, cy, blueConfig, false, 0.65);
+        drawPureGrayAsh(gAsh1, cx + 25, cy, 60, 80, 120);
+
+        // --- 3. ASH DISSOLVE SEQUENCE (PURE GRAY PARTICLES) ---
+        // Stage 1: Heavy Ash (100 particles)
+        const ashHeavy = document.getElementById('ash_heavy').getContext('2d');
+        drawPureGrayAsh(ashHeavy, cx + 20, cy - 20, 100, 110, 140);
+
+        // Stage 2: Half Ash (50 particles)
+        const ashHalf = document.getElementById('ash_half').getContext('2d');
+        drawPureGrayAsh(ashHalf, cx + 20, cy - 30, 50, 90, 120);
+
+        // Stage 3: Slight Ash (20 particles)
+        const ashSlight = document.getElementById('ash_slight').getContext('2d');
+        drawPureGrayAsh(ashSlight, cx + 20, cy - 40, 20, 70, 90);
+
+        // Stage 4: Vanished (Clear Canvas Frame)
+        const ashVanished = document.getElementById('ash_vanished').getContext('2d');
+        ashVanished.clearRect(0, 0, 280, 280);
+
+        function downloadAsset(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+
+</body>
+</html>

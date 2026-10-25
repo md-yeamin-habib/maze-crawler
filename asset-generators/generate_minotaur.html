@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minotaur 3D Rig Studio - Blockbench Style (2:5)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #070a0f;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        #viewport-container {
+            position: absolute;
+            top: 50%;
+            left: calc(50% + 180px);
+            transform: translate(-50%, -50%);
+            width: calc(min(88vh * 0.4, 100vw - 390px));
+            height: calc(min(88vh, (100vw - 390px) * 2.5));
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: #0f172a;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(249, 115, 22, 0.5);
+            border-radius: 3px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(249, 115, 22, 0.9);
+        }
+    </style>
+</head>
+<body class="text-slate-200">
+
+    <!-- 3D Viewport Box -->
+    <div id="viewport-container">
+        <div id="canvas-holder" class="w-full h-full"></div>
+    </div>
+
+    <!-- UI Control Sidebar -->
+    <div class="fixed top-4 left-4 z-20 w-[350px] max-h-[calc(100vh-32px)] bg-slate-900/95 backdrop-blur-md border border-slate-700/60 rounded-xl p-4 shadow-2xl overflow-y-auto custom-scroll flex flex-col gap-4">
+        
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+                <h1 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-orange-500 inline-block shadow-[0_0_10px_#f97316]"></span>
+                    Minotaur 3D Studio
+                </h1>
+                <p class="text-xs text-slate-400">Low-Poly Blockbench Character (2:5 Format)</p>
+            </div>
+            <span class="text-xs bg-orange-500/10 text-orange-400 border border-orange-500/20 px-2 py-0.5 rounded font-mono">v2.5</span>
+        </div>
+
+        <!-- Camera Presets -->
+        <div>
+            <span class="text-[11px] font-bold text-orange-400 uppercase tracking-wider block mb-2">Camera Perspective</span>
+            <div class="grid grid-cols-4 gap-1.5">
+                <button onclick="setCameraView('front')" class="px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded border border-slate-700 font-medium">Front</button>
+                <button onclick="setCameraView('threequarter')" class="px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded border border-slate-700 font-medium">3/4 View</button>
+                <button onclick="setCameraView('side')" class="px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded border border-slate-700 font-medium">Side</button>
+                <button onclick="setCameraView('back')" class="px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded border border-slate-700 font-medium">Back</button>
+            </div>
+        </div>
+
+        <!-- Pose Presets -->
+        <div class="border-t border-slate-800 pt-3">
+            <span class="text-[11px] font-bold text-orange-400 uppercase tracking-wider block mb-2">Pose Presets</span>
+            <div class="grid grid-cols-2 gap-1.5">
+                <button onclick="applyPreset('default')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-orange-600/30 hover:border-orange-500 border border-slate-700 text-xs rounded font-medium text-left flex items-center justify-between">
+                    <span>T-Pose / Reset</span>
+                    <span class="font-mono text-[9px] text-slate-500">P1</span>
+                </button>
+                <button onclick="applyPreset('idle')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-orange-600/30 hover:border-orange-500 border border-slate-700 text-xs rounded font-medium text-left flex items-center justify-between">
+                    <span>Idle Guard</span>
+                    <span class="font-mono text-[9px] text-slate-500">P2</span>
+                </button>
+                <button onclick="applyPreset('walk1')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-orange-600/30 hover:border-orange-500 border border-slate-700 text-xs rounded font-medium text-left flex items-center justify-between">
+                    <span>Walk Cycle A</span>
+                    <span class="font-mono text-[9px] text-slate-500">P3</span>
+                </button>
+                <button onclick="applyPreset('walk2')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-orange-600/30 hover:border-orange-500 border border-slate-700 text-xs rounded font-medium text-left flex items-center justify-between">
+                    <span>Walk Cycle B</span>
+                    <span class="font-mono text-[9px] text-slate-500">P4</span>
+                </button>
+                <button onclick="applyPreset('attack')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-orange-600/30 hover:border-orange-500 border border-slate-700 text-xs rounded font-medium text-left flex items-center justify-between">
+                    <span>Overhead Slam</span>
+                    <span class="font-mono text-[9px] text-slate-500">P5</span>
+                </button>
+                <button onclick="applyPreset('hurt')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-orange-600/30 hover:border-orange-500 border border-slate-700 text-xs rounded font-medium text-left flex items-center justify-between">
+                    <span>Hurt / Knockback</span>
+                    <span class="font-mono text-[9px] text-slate-500">P6</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Interactive Magma Axe Controls Section -->
+        <div class="border-t border-slate-800 pt-3 space-y-3 bg-slate-950/40 p-3 rounded-lg border border-orange-500/20">
+            <div class="flex items-center justify-between">
+                <span class="font-semibold text-orange-400 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                    Battleaxe Alignment
+                </span>
+                <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer">
+                    <span>Visible</span>
+                    <input type="checkbox" id="axeVisible" checked onchange="toggleAxeVisibility(this.checked)" class="accent-orange-500 rounded cursor-pointer">
+                </label>
+            </div>
+
+            <!-- Axe Scale -->
+            <div>
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                    <span>Axe Scale / Size</span>
+                    <span id="axeScaleVal" class="font-mono text-orange-400">1.00</span>
+                </div>
+                <input type="range" id="axeScale" min="0.3" max="2.5" step="0.05" value="1.0" oninput="updateAxeTransform()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <!-- Axe Pitch (X-axis plane rotation Y-Z) -->
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="font-medium text-orange-300">Pitch (X-Axis Rot - Y/Z Plane)</span>
+                    <span id="axeRotXVal" class="font-mono text-orange-400">0°</span>
+                </div>
+                <input type="range" id="axeRotX" min="-180" max="180" value="0" oninput="updateAxeTransform()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <!-- Axe Yaw & Roll -->
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <div class="flex justify-between text-xs text-slate-400 mb-1">
+                        <span>Yaw (Y-Rot)</span>
+                        <span id="axeRotYVal" class="font-mono text-orange-400">0°</span>
+                    </div>
+                    <input type="range" id="axeRotY" min="-180" max="180" value="0" oninput="updateAxeTransform()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs text-slate-400 mb-1">
+                        <span>Roll (Z-Rot)</span>
+                        <span id="axeRotZVal" class="font-mono text-orange-400">0°</span>
+                    </div>
+                    <input type="range" id="axeRotZ" min="-180" max="180" value="0" oninput="updateAxeTransform()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+                </div>
+            </div>
+
+            <!-- Axe Position Offsets -->
+            <div class="space-y-2 pt-1 border-t border-slate-800/60">
+                <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Hand Position Offset</span>
+                <div>
+                    <div class="flex justify-between text-xs text-slate-400 mb-1">
+                        <span>Grip Offset Y (Handle Slide)</span>
+                        <span id="axePosYVal" class="font-mono text-orange-400">0.00</span>
+                    </div>
+                    <input type="range" id="axePosY" min="-1.5" max="1.5" step="0.05" value="0" oninput="updateAxeTransform()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <div class="flex justify-between text-xs text-slate-400 mb-1">
+                            <span>Offset X</span>
+                            <span id="axePosXVal" class="font-mono text-orange-400">0.00</span>
+                        </div>
+                        <input type="range" id="axePosX" min="-0.8" max="0.8" step="0.02" value="0" oninput="updateAxeTransform()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs text-slate-400 mb-1">
+                            <span>Offset Z</span>
+                            <span id="axePosZVal" class="font-mono text-orange-400">0.00</span>
+                        </div>
+                        <input type="range" id="axePosZ" min="-0.8" max="0.8" step="0.02" value="0" oninput="updateAxeTransform()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="resetAxeTransform()" class="w-full py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded text-slate-300 text-xs font-medium transition">
+                Reset Axe Alignment
+            </button>
+        </div>
+
+        <!-- Joint Sliders -->
+        <div class="border-t border-slate-800 pt-3 space-y-2.5">
+            <span class="text-[11px] font-bold text-orange-400 uppercase tracking-wider block">Spine & Head FK</span>
+            
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-300">Torso Crouch / Lean</span>
+                    <span id="bodyRotYVal" class="font-mono text-orange-400">0°</span>
+                </div>
+                <input type="range" id="bodyRotY" min="-35" max="35" value="0" oninput="updatePose()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-300">Head Pitch</span>
+                    <span id="headRotXVal" class="font-mono text-orange-400">0°</span>
+                </div>
+                <input type="range" id="headRotX" min="-25" max="25" value="0" oninput="updatePose()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-300">Head Yaw</span>
+                    <span id="headRotYVal" class="font-mono text-orange-400">0°</span>
+                </div>
+                <input type="range" id="headRotY" min="-35" max="35" value="0" oninput="updatePose()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <span class="text-[11px] font-bold text-orange-400 uppercase tracking-wider block pt-2">Arms FK</span>
+            
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-300">Left Shoulder Pitch</span>
+                    <span id="leftArmXVal" class="font-mono text-orange-400">15°</span>
+                </div>
+                <input type="range" id="leftArmX" min="-130" max="130" value="15" oninput="updatePose()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-300">Left Shoulder Roll</span>
+                    <span id="leftArmZVal" class="font-mono text-orange-400">15°</span>
+                </div>
+                <input type="range" id="leftArmZ" min="-45" max="90" value="15" oninput="updatePose()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-300">Left Elbow Bend</span>
+                    <span id="leftElbowXVal" class="font-mono text-orange-400">-10°</span>
+                </div>
+                <input type="range" id="leftElbowX" min="-120" max="0" value="-10" oninput="updatePose()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-300">Right Shoulder Pitch</span>
+                    <span id="rightArmXVal" class="font-mono text-orange-400">-20°</span>
+                </div>
+                <input type="range" id="rightArmX" min="-130" max="130" value="-20" oninput="updatePose()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-300">Right Shoulder Roll</span>
+                    <span id="rightArmZVal" class="font-mono text-orange-400">-15°</span>
+                </div>
+                <input type="range" id="rightArmZ" min="-90" max="45" value="-15" oninput="updatePose()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-300">Right Elbow Bend</span>
+                    <span id="rightElbowXVal" class="font-mono text-orange-400">-10°</span>
+                </div>
+                <input type="range" id="rightElbowX" min="-120" max="0" value="-10" oninput="updatePose()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <span class="text-[11px] font-bold text-orange-400 uppercase tracking-wider block pt-2">Legs FK</span>
+
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-300">Left Hip Pitch</span>
+                    <span id="leftLegXVal" class="font-mono text-orange-400">10°</span>
+                </div>
+                <input type="range" id="leftLegX" min="-60" max="60" value="10" oninput="updatePose()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-300">Left Hip Roll</span>
+                    <span id="leftLegZVal" class="font-mono text-orange-400">0°</span>
+                </div>
+                <input type="range" id="leftLegZ" min="-30" max="30" value="0" oninput="updatePose()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-300">Left Knee Bend</span>
+                    <span id="leftKneeXVal" class="font-mono text-orange-400">0°</span>
+                </div>
+                <input type="range" id="leftKneeX" min="0" max="90" value="0" oninput="updatePose()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-300">Right Hip Pitch</span>
+                    <span id="rightLegXVal" class="font-mono text-orange-400">-10°</span>
+                </div>
+                <input type="range" id="rightLegX" min="-60" max="60" value="-10" oninput="updatePose()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-300">Right Hip Roll</span>
+                    <span id="rightLegZVal" class="font-mono text-orange-400">0°</span>
+                </div>
+                <input type="range" id="rightLegZ" min="-30" max="30" value="0" oninput="updatePose()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-300">Right Knee Bend</span>
+                    <span id="rightKneeXVal" class="font-mono text-orange-400">0°</span>
+                </div>
+                <input type="range" id="rightKneeX" min="0" max="90" value="0" oninput="updatePose()" class="w-full accent-orange-500 h-1 bg-slate-800 rounded">
+            </div>
+        </div>
+
+        <!-- Customization Toggles -->
+        <div class="border-t border-slate-800 pt-3 space-y-2">
+            <span class="text-[11px] font-bold text-orange-400 uppercase tracking-wider block">Render Settings</span>
+            
+            <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                <input type="checkbox" id="chk-transparent" checked onchange="updatePose()" class="accent-orange-500 rounded">
+                Transparent PNG Background
+            </label>
+            <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                <input type="checkbox" id="chk-wireframe" onchange="updatePose()" class="accent-orange-500 rounded">
+                Wireframe Overlay
+            </label>
+        </div>
+
+        <button onclick="exportPNG()" class="w-full py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-semibold text-xs rounded-lg shadow-lg transition duration-200 mt-2">
+            Export 800x2000 PNG (2:5)
+        </button>
+    </div>
+
+    <script>
+        // Setup Three.js environment
+        let scene, camera, renderer, controls;
+        let rig = {
+            pelvis: null,
+            torso: null,
+            head: null,
+            lShoulder: null,
+            lElbow: null,
+            rShoulder: null,
+            rElbow: null,
+            lHip: null,
+            lKnee: null,
+            rHip: null,
+            rKnee: null,
+            axeGroup: null
+        };
+
+        const materials = {};
+        const RENDER_WIDTH = 800;
+        const RENDER_HEIGHT = 2000;
+
+        const defaultAxeTransform = {
+            scale: 1.0,
+            rotX: 0,
+            rotY: 0,
+            rotZ: 0,
+            posX: 0,
+            posY: 0,
+            posZ: 0
+        };
+
+        function init() {
+            const container = document.getElementById('canvas-holder');
+
+            // Scene setup
+            scene = new THREE.Scene();
+
+            // Camera (Fixed aspect ratio 2:5)
+            camera = new THREE.PerspectiveCamera(36, RENDER_WIDTH / RENDER_HEIGHT, 0.1, 100);
+            camera.position.set(0, 1.2, 7.8);
+
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+            renderer.setSize(RENDER_WIDTH, RENDER_HEIGHT);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            container.appendChild(renderer.domElement);
+
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.target.set(0, 0.9, 0);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            setupLighting();
+            setupMaterials();
+            buildMinotaurModel();
+
+            updatePose();
+            updateAxeTransform();
+            setCameraView('threequarter');
+
+            animate();
+        }
+
+        function setupLighting() {
+            const ambient = new THREE.AmbientLight(0xffecd6, 0.7);
+            scene.add(ambient);
+
+            const sun = new THREE.DirectionalLight(0xffffff, 1.3);
+            sun.position.set(6, 12, 8);
+            sun.castShadow = true;
+            sun.shadow.mapSize.width = 2048;
+            sun.shadow.mapSize.height = 2048;
+            scene.add(sun);
+
+            const rim = new THREE.DirectionalLight(0xf97316, 1.5);
+            rim.position.set(-7, 5, -6);
+            scene.add(rim);
+
+            const fill = new THREE.DirectionalLight(0x60a5fa, 0.45);
+            fill.position.set(0, -4, 6);
+            scene.add(fill);
+        }
+
+        function setupMaterials() {
+            materials.furDark = new THREE.MeshStandardMaterial({ color: 0x2b1a13, roughness: 0.85, metalness: 0.1, flatShading: true });
+            materials.furMedium = new THREE.MeshStandardMaterial({ color: 0x3d271d, roughness: 0.8, metalness: 0.1, flatShading: true });
+            materials.furLight = new THREE.MeshStandardMaterial({ color: 0x54392b, roughness: 0.75, metalness: 0.1, flatShading: true });
+            materials.skinNose = new THREE.MeshStandardMaterial({ color: 0x18100b, roughness: 0.9, flatShading: true });
+            materials.horn = new THREE.MeshStandardMaterial({ color: 0xd6d3d1, roughness: 0.45, metalness: 0.15, flatShading: true });
+            materials.hoof = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.6, metalness: 0.2, flatShading: true });
+            materials.steel = new THREE.MeshStandardMaterial({ color: 0x3f3f46, roughness: 0.35, metalness: 0.75, flatShading: true });
+            materials.steelDark = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.4, metalness: 0.8, flatShading: true });
+            materials.brass = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.35, metalness: 0.65, flatShading: true });
+            materials.leather = new THREE.MeshStandardMaterial({ color: 0x1a0f0b, roughness: 0.75, metalness: 0.15, flatShading: true });
+            materials.eyeRed = new THREE.MeshBasicMaterial({ color: 0xff1a1a });
+            materials.magmaCore = new THREE.MeshBasicMaterial({ color: 0xffcc00 });
+            materials.magmaGlow = new THREE.MeshBasicMaterial({ color: 0xff3300 });
+        }
+
+        function buildMinotaurModel() {
+            const rootGroup = new THREE.Group();
+            rootGroup.position.set(0, -0.65, 0);
+            scene.add(rootGroup);
+
+            // 1. Pelvis Root (Sealed Geometry Anchor)
+            rig.pelvis = new THREE.Group();
+            rig.pelvis.position.set(0, 1.45, 0);
+            rootGroup.add(rig.pelvis);
+
+            // Pelvis Mesh
+            const pelvisMesh = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.45, 0.6), materials.leather);
+            pelvisMesh.position.y = -0.1;
+            rig.pelvis.add(pelvisMesh);
+
+            // Detailed Loincloth
+            const loinFront = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.65, 0.08), materials.furMedium);
+            loinFront.position.set(0, -0.32, 0.32);
+            rig.pelvis.add(loinFront);
+
+            const beltTrim = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.14, 0.64), materials.steelDark);
+            beltTrim.position.y = 0.05;
+            rig.pelvis.add(beltTrim);
+
+            const beltBuckle = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.24, 0.12), materials.brass);
+            beltBuckle.position.set(0, 0.05, 0.34);
+            rig.pelvis.add(beltBuckle);
+
+            // 2. Chest & Torso (Sealed, No-Gap Joint Overlap)
+            rig.torso = new THREE.Group();
+            rig.torso.position.set(0, 0.12, 0);
+            rig.pelvis.add(rig.torso);
+
+            // Overlapping Torso Connection Block (Prevents Gaps when crouching)
+            const gapFiller = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.35, 8), materials.furDark);
+            gapFiller.position.y = 0.12;
+            rig.torso.add(gapFiller);
+
+            // Upper Chest & Ribcage
+            const chestMesh = new THREE.Mesh(new THREE.BoxGeometry(1.28, 0.88, 0.85), materials.furDark);
+            chestMesh.position.y = 0.55;
+            rig.torso.add(chestMesh);
+
+            // Muscular Chest Plates
+            const pecL = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.38, 0.12), materials.furMedium);
+            pecL.position.set(0.3, 0.62, 0.44);
+            rig.torso.add(pecL);
+
+            const pecR = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.38, 0.12), materials.furMedium);
+            pecR.position.set(-0.3, 0.62, 0.44);
+            rig.torso.add(pecR);
+
+            const absPatch = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.32, 0.1), materials.furLight);
+            absPatch.position.set(0, 0.28, 0.43);
+            rig.torso.add(absPatch);
+
+            // Cross Harness Straps
+            const strap1 = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.15, 0.06), materials.leather);
+            strap1.position.set(0, 0.58, 0.45);
+            strap1.rotation.z = 0.52;
+            rig.torso.add(strap1);
+
+            const strap2 = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.15, 0.06), materials.leather);
+            strap2.position.set(0, 0.58, 0.45);
+            strap2.rotation.z = -0.52;
+            rig.torso.add(strap2);
+
+            // Central Ring Emblem
+            const ringEmblem = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.08), materials.brass);
+            ringEmblem.position.set(0, 0.58, 0.49);
+            rig.torso.add(ringEmblem);
+
+            // 3. Head & Swept Horns
+            rig.head = new THREE.Group();
+            rig.head.position.set(0, 0.98, 0.1);
+            rig.torso.add(rig.head);
+
+            // Neck Connection
+            const neck = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 0.5), materials.furDark);
+            neck.position.set(0, -0.1, -0.05);
+            rig.head.add(neck);
+
+            // Main Head Block
+            const headMesh = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.55, 0.62), materials.furDark);
+            headMesh.position.set(0, 0.22, -0.05);
+            rig.head.add(headMesh);
+
+            // Broad Heavy Snout
+            const snout = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.34, 0.48), materials.skinNose);
+            snout.position.set(0, 0.1, 0.42);
+            rig.head.add(snout);
+
+            const nostrilL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.08, 0.05), materials.furDark);
+            nostrilL.position.set(0.14, 0.12, 0.66);
+            rig.head.add(nostrilL);
+
+            const nostrilR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.08, 0.05), materials.furDark);
+            nostrilR.position.set(-0.14, 0.12, 0.66);
+            rig.head.add(nostrilR);
+
+            // Brass Nose Ring
+            const noseRing = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.03, 6, 12), materials.brass);
+            noseRing.position.set(0, -0.06, 0.66);
+            noseRing.rotation.x = Math.PI / 2;
+            rig.head.add(noseRing);
+
+            // Fiery Eyes
+            const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.06, 0.06), materials.eyeRed);
+            eyeL.position.set(0.23, 0.3, 0.26);
+            rig.head.add(eyeL);
+
+            const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.06, 0.06), materials.eyeRed);
+            eyeR.position.set(-0.23, 0.3, 0.26);
+            rig.head.add(eyeR);
+
+            // Swept Horns
+            function buildBlockyHorn(isLeft) {
+                const hornGroup = new THREE.Group();
+                const mult = isLeft ? 1 : -1;
+
+                const seg1 = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.22, 0.22), materials.horn);
+                seg1.position.set(mult * 0.45, 0.36, -0.05);
+                seg1.rotation.z = mult * -0.25;
+                hornGroup.add(seg1);
+
+                const seg2 = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.38, 0.2), materials.horn);
+                seg2.position.set(mult * 0.72, 0.58, -0.05);
+                seg2.rotation.z = mult * 0.45;
+                hornGroup.add(seg2);
+
+                const seg3 = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.45, 0.18), materials.horn);
+                seg3.position.set(mult * 0.82, 0.95, -0.02);
+                seg3.rotation.z = mult * 0.15;
+                hornGroup.add(seg3);
+
+                return hornGroup;
+            }
+
+            rig.head.add(buildBlockyHorn(true));
+            rig.head.add(buildBlockyHorn(false));
+
+            // 4. Tiered Shoulder Pauldrons
+            function buildPauldron(isLeft) {
+                const mult = isLeft ? 1 : -1;
+                const pGroup = new THREE.Group();
+
+                const tier1 = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.22, 0.65), materials.steel);
+                tier1.position.set(mult * 0.12, 0.15, 0);
+                pGroup.add(tier1);
+
+                const tier2 = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.2, 0.58), materials.steelDark);
+                tier2.position.set(mult * 0.18, 0.02, 0);
+                pGroup.add(tier2);
+
+                const trim = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.06, 0.68), materials.brass);
+                trim.position.set(mult * 0.12, 0.24, 0);
+                pGroup.add(trim);
+
+                return pGroup;
+            }
+
+            // 5. Left Arm FK Chain
+            rig.lShoulder = new THREE.Group();
+            rig.lShoulder.position.set(0.72, 0.82, 0);
+            rig.torso.add(rig.lShoulder);
+            rig.lShoulder.add(buildPauldron(true));
+
+            const lUpperArm = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.65, 0.38), materials.furDark);
+            lUpperArm.position.y = -0.32;
+            rig.lShoulder.add(lUpperArm);
+
+            rig.lElbow = new THREE.Group();
+            rig.lElbow.position.set(0, -0.62, 0);
+            rig.lShoulder.add(rig.lElbow);
+
+            const lForearm = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.6, 0.36), materials.furMedium);
+            lForearm.position.y = -0.28;
+            rig.lElbow.add(lForearm);
+
+            const lBracer = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.32, 0.4), materials.steelDark);
+            lBracer.position.y = -0.32;
+            rig.lElbow.add(lBracer);
+
+            const lHand = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.28, 0.3), materials.leather);
+            lHand.position.y = -0.62;
+            rig.lElbow.add(lHand);
+
+            // 6. Right Arm FK Chain + Magma Axe
+            rig.rShoulder = new THREE.Group();
+            rig.rShoulder.position.set(-0.72, 0.82, 0);
+            rig.torso.add(rig.rShoulder);
+            rig.rShoulder.add(buildPauldron(false));
+
+            const rUpperArm = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.65, 0.38), materials.furDark);
+            rUpperArm.position.y = -0.32;
+            rig.rShoulder.add(rUpperArm);
+
+            rig.rElbow = new THREE.Group();
+            rig.rElbow.position.set(0, -0.62, 0);
+            rig.rShoulder.add(rig.rElbow);
+
+            const rForearm = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.6, 0.36), materials.furMedium);
+            rForearm.position.y = -0.28;
+            rig.rElbow.add(rForearm);
+
+            const rBracer = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.32, 0.4), materials.steelDark);
+            rBracer.position.y = -0.32;
+            rig.rElbow.add(rBracer);
+
+            const rHand = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.28, 0.3), materials.leather);
+            rHand.position.y = -0.62;
+            rig.rElbow.add(rHand);
+
+            // 7. Battleaxe Assembly
+            rig.axeGroup = buildBattleAxe();
+            rig.axeGroup.position.set(0, -0.62, 0);
+            rig.rElbow.add(rig.axeGroup);
+
+            // 8. Left Leg FK Chain
+            rig.lHip = new THREE.Group();
+            rig.lHip.position.set(0.32, -0.15, 0);
+            rig.pelvis.add(rig.lHip);
+
+            const lThigh = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.75, 0.42), materials.furDark);
+            lThigh.position.y = -0.38;
+            rig.lHip.add(lThigh);
+
+            rig.lKnee = new THREE.Group();
+            rig.lKnee.position.set(0, -0.72, 0);
+            rig.lHip.add(rig.lKnee);
+
+            const lShin = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.7, 0.38), materials.furMedium);
+            lShin.position.y = -0.35;
+            rig.lKnee.add(lShin);
+
+            const lHoof = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.28, 0.5), materials.hoof);
+            lHoof.position.set(0, -0.72, 0.06);
+            rig.lKnee.add(lHoof);
+
+            // 9. Right Leg FK Chain
+            rig.rHip = new THREE.Group();
+            rig.rHip.position.set(-0.32, -0.15, 0);
+            rig.pelvis.add(rig.rHip);
+
+            const rThigh = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.75, 0.42), materials.furDark);
+            rThigh.position.y = -0.38;
+            rig.rHip.add(rThigh);
+
+            rig.rKnee = new THREE.Group();
+            rig.rKnee.position.set(0, -0.72, 0);
+            rig.rHip.add(rig.rKnee);
+
+            const rShin = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.7, 0.38), materials.furMedium);
+            rShin.position.y = -0.35;
+            rig.rKnee.add(rShin);
+
+            const rHoof = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.28, 0.5), materials.hoof);
+            rHoof.position.set(0, -0.72, 0.06);
+            rig.rKnee.add(rHoof);
+        }
+
+        function buildBattleAxe() {
+            const axe = new THREE.Group();
+
+            // Shaft
+            const handleGeo = new THREE.CylinderGeometry(0.05, 0.05, 2.2, 8);
+            const handleMesh = new THREE.Mesh(handleGeo, materials.leather);
+            handleMesh.position.y = 0.3;
+            axe.add(handleMesh);
+
+            const shaftCapTop = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.25, 0.14), materials.steelDark);
+            shaftCapTop.position.set(0, 1.25, 0);
+            axe.add(shaftCapTop);
+
+            const shaftCapBot = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.2, 0.14), materials.brass);
+            shaftCapBot.position.set(0, -0.75, 0);
+            axe.add(shaftCapBot);
+
+            // Double-Headed Blade Group (Spanning along Z-axis)
+            const bladeGroup = new THREE.Group();
+            bladeGroup.position.set(0, 1.0, 0);
+            axe.add(bladeGroup);
+
+            const collar = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.55, 0.32), materials.steelDark);
+            bladeGroup.add(collar);
+
+            const frontBladeSteel = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.95, 0.65), materials.steel);
+            frontBladeSteel.position.set(0, 0, 0.45);
+            bladeGroup.add(frontBladeSteel);
+
+            const frontMagmaCore = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.75, 0.45), materials.magmaCore);
+            frontMagmaCore.position.set(0, 0, 0.5);
+            bladeGroup.add(frontMagmaCore);
+
+            const frontMagmaEdge = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.85, 0.12), materials.magmaGlow);
+            frontMagmaEdge.position.set(0, 0, 0.78);
+            bladeGroup.add(frontMagmaEdge);
+
+            const backBladeSteel = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.75, 0.55), materials.steel);
+            backBladeSteel.position.set(0, 0, -0.4);
+            bladeGroup.add(backBladeSteel);
+
+            const backMagmaCore = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.55, 0.38), materials.magmaCore);
+            backMagmaCore.position.set(0, 0, -0.42);
+            bladeGroup.add(backMagmaCore);
+
+            return axe;
+        }
+
+        const deg2Rad = deg => deg * (Math.PI / 180);
+
+        function updatePose() {
+            const bodyY = parseFloat(document.getElementById('bodyRotY').value);
+            const headX = parseFloat(document.getElementById('headRotX').value);
+            const headY = parseFloat(document.getElementById('headRotY').value);
+
+            const lArmX = parseFloat(document.getElementById('leftArmX').value);
+            const lArmZ = parseFloat(document.getElementById('leftArmZ').value);
+            const lElbowX = parseFloat(document.getElementById('leftElbowX').value);
+
+            const rArmX = parseFloat(document.getElementById('rightArmX').value);
+            const rArmZ = parseFloat(document.getElementById('rightArmZ').value);
+            const rElbowX = parseFloat(document.getElementById('rightElbowX').value);
+
+            const lLegX = parseFloat(document.getElementById('leftLegX').value);
+            const lLegZ = parseFloat(document.getElementById('leftLegZ').value);
+            const lKneeX = parseFloat(document.getElementById('leftKneeX').value);
+
+            const rLegX = parseFloat(document.getElementById('rightLegX').value);
+            const rLegZ = parseFloat(document.getElementById('rightLegZ').value);
+            const rKneeX = parseFloat(document.getElementById('rightKneeX').value);
+
+            // Display values
+            document.getElementById('bodyRotYVal').innerText = bodyY + '°';
+            document.getElementById('headRotXVal').innerText = headX + '°';
+            document.getElementById('headRotYVal').innerText = headY + '°';
+            document.getElementById('leftArmXVal').innerText = lArmX + '°';
+            document.getElementById('leftArmZVal').innerText = lArmZ + '°';
+            document.getElementById('leftElbowXVal').innerText = lElbowX + '°';
+            document.getElementById('rightArmXVal').innerText = rArmX + '°';
+            document.getElementById('rightArmZVal').innerText = rArmZ + '°';
+            document.getElementById('rightElbowXVal').innerText = rElbowX + '°';
+            document.getElementById('leftLegXVal').innerText = lLegX + '°';
+            document.getElementById('leftLegZVal').innerText = lLegZ + '°';
+            document.getElementById('leftKneeXVal').innerText = lKneeX + '°';
+            document.getElementById('rightLegXVal').innerText = rLegX + '°';
+            document.getElementById('rightLegZVal').innerText = rLegZ + '°';
+            document.getElementById('rightKneeXVal').innerText = rKneeX + '°';
+
+            // Apply bone rotations
+            if (rig.pelvis) rig.pelvis.rotation.y = deg2Rad(bodyY);
+
+            if (rig.head) {
+                rig.head.rotation.x = deg2Rad(headX);
+                rig.head.rotation.y = deg2Rad(headY);
+            }
+
+            if (rig.lShoulder) {
+                rig.lShoulder.rotation.x = deg2Rad(lArmX);
+                rig.lShoulder.rotation.z = deg2Rad(lArmZ);
+            }
+            if (rig.lElbow) rig.lElbow.rotation.x = deg2Rad(lElbowX);
+
+            if (rig.rShoulder) {
+                rig.rShoulder.rotation.x = deg2Rad(rArmX);
+                rig.rShoulder.rotation.z = deg2Rad(rArmZ);
+            }
+            if (rig.rElbow) rig.rElbow.rotation.x = deg2Rad(rElbowX);
+
+            if (rig.lHip) {
+                rig.lHip.rotation.x = deg2Rad(lLegX);
+                rig.lHip.rotation.z = deg2Rad(lLegZ);
+            }
+            if (rig.lKnee) rig.lKnee.rotation.x = deg2Rad(lKneeX);
+
+            if (rig.rHip) {
+                rig.rHip.rotation.x = deg2Rad(rLegX);
+                rig.rHip.rotation.z = deg2Rad(rLegZ);
+            }
+            if (rig.rKnee) rig.rKnee.rotation.x = deg2Rad(rKneeX);
+
+            // Material wireframe and background transparency
+            const wireframe = document.getElementById('chk-wireframe').checked;
+            Object.values(materials).forEach(mat => mat.wireframe = wireframe);
+
+            const isTransparent = document.getElementById('chk-transparent').checked;
+            scene.background = isTransparent ? null : new THREE.Color(0x0f172a);
+        }
+
+        function updateAxeTransform() {
+            if (!rig.axeGroup) return;
+
+            const scale = parseFloat(document.getElementById('axeScale').value);
+            const rotXDeg = parseFloat(document.getElementById('axeRotX').value);
+            const rotYDeg = parseFloat(document.getElementById('axeRotY').value);
+            const rotZDeg = parseFloat(document.getElementById('axeRotZ').value);
+            
+            const posX = parseFloat(document.getElementById('axePosX').value);
+            const posY = parseFloat(document.getElementById('axePosY').value);
+            const posZ = parseFloat(document.getElementById('axePosZ').value);
+
+            // Update Labels
+            document.getElementById('axeScaleVal').innerText = scale.toFixed(2);
+            document.getElementById('axeRotXVal').innerText = rotXDeg + '°';
+            document.getElementById('axeRotYVal').innerText = rotYDeg + '°';
+            document.getElementById('axeRotZVal').innerText = rotZDeg + '°';
+            document.getElementById('axePosXVal').innerText = posX.toFixed(2);
+            document.getElementById('axePosYVal').innerText = posY.toFixed(2);
+            document.getElementById('axePosZVal').innerText = posZ.toFixed(2);
+
+            // Scale
+            rig.axeGroup.scale.set(scale, scale, scale);
+
+            // Euler Rotations (Pitch, Yaw, Roll)
+            rig.axeGroup.rotation.x = deg2Rad(rotXDeg);
+            rig.axeGroup.rotation.y = deg2Rad(rotYDeg);
+            rig.axeGroup.rotation.z = deg2Rad(rotZDeg);
+
+            // Position Offsets relative to right hand anchor (-0.62)
+            rig.axeGroup.position.set(posX, -0.62 + posY, posZ);
+        }
+
+        function toggleAxeVisibility(visible) {
+            if (rig.axeGroup) {
+                rig.axeGroup.visible = visible;
+            }
+        }
+
+        function resetAxeTransform() {
+            document.getElementById('axeScale').value = defaultAxeTransform.scale;
+            document.getElementById('axeRotX').value = defaultAxeTransform.rotX;
+            document.getElementById('axeRotY').value = defaultAxeTransform.rotY;
+            document.getElementById('axeRotZ').value = defaultAxeTransform.rotZ;
+            document.getElementById('axePosX').value = defaultAxeTransform.posX;
+            document.getElementById('axePosY').value = defaultAxeTransform.posY;
+            document.getElementById('axePosZ').value = defaultAxeTransform.posZ;
+            updateAxeTransform();
+        }
+
+        function setCameraView(view) {
+            const dist = 7.8;
+            const targetY = 0.9;
+            controls.target.set(0, targetY, 0);
+
+            switch (view) {
+                case 'front':
+                    camera.position.set(0, targetY, dist);
+                    break;
+                case 'threequarter':
+                    camera.position.set(dist * 0.65, targetY + 0.6, dist * 0.7);
+                    break;
+                case 'side':
+                    camera.position.set(dist, targetY, 0);
+                    break;
+                case 'back':
+                    camera.position.set(0, targetY, -dist);
+                    break;
+            }
+            controls.update();
+        }
+
+        function setSlider(id, valId, value) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.value = value;
+            const displayEl = document.getElementById(valId);
+            if (displayEl) displayEl.innerText = value + '°';
+        }
+
+        function applyPreset(presetKey) {
+            const presets = {
+                default: {
+                    bodyY: 0, headX: 0, headY: 0,
+                    lArmX: 15, lArmZ: 15, lElbowX: -10,
+                    rArmX: -20, rArmZ: -15, rElbowX: -10,
+                    lLegX: 10, lLegZ: 0, lKneeX: 0,
+                    rLegX: -10, rLegZ: 0, rKneeX: 0,
+                    axeScale: 1.0, axeRotX: 0, axeRotY: 0, axeRotZ: 0, axePosX: 0, axePosY: 0, axePosZ: 0
+                },
+                idle: {
+                    bodyY: -10, headX: 5, headY: 10,
+                    lArmX: 20, lArmZ: 25, lElbowX: -35,
+                    rArmX: -15, rArmZ: -20, rElbowX: -45,
+                    lLegX: -15, lLegZ: 5, lKneeX: 25,
+                    rLegX: 15, rLegZ: -5, rKneeX: 15,
+                    axeScale: 1.0, axeRotX: 25, axeRotY: 0, axeRotZ: -15, axePosX: 0, axePosY: -0.1, axePosZ: 0
+                },
+                walk1: {
+                    bodyY: 15, headX: -5, headY: -10,
+                    lArmX: -35, lArmZ: 20, lElbowX: -20,
+                    rArmX: 40, rArmZ: -15, rElbowX: -60,
+                    lLegX: 40, lLegZ: 0, lKneeX: 25,
+                    rLegX: -35, rLegZ: 0, rKneeX: 55,
+                    axeScale: 1.0, axeRotX: 45, axeRotY: -10, axeRotZ: 0, axePosX: 0, axePosY: 0, axePosZ: 0
+                },
+                walk2: {
+                    bodyY: -15, headX: -5, headY: 12,
+                    lArmX: 45, lArmZ: 20, lElbowX: -55,
+                    rArmX: -30, rArmZ: -20, rElbowX: -25,
+                    lLegX: -35, lLegZ: 0, lKneeX: 50,
+                    rLegX: 35, rLegZ: 0, rKneeX: 20,
+                    axeScale: 1.0, axeRotX: -20, axeRotY: 15, axeRotZ: 10, axePosX: 0, axePosY: 0, axePosZ: 0
+                },
+                attack: {
+                    bodyY: 25, headX: 18, headY: -20,
+                    lArmX: -55, lArmZ: 40, lElbowX: -80,
+                    rArmX: -125, rArmZ: -25, rElbowX: -20,
+                    lLegX: -40, lLegZ: 10, lKneeX: 60,
+                    rLegX: 35, rLegZ: -5, rKneeX: 15,
+                    axeScale: 1.15, axeRotX: -75, axeRotY: 30, axeRotZ: 15, axePosX: 0, axePosY: 0.1, axePosZ: 0
+                },
+                hurt: {
+                    bodyY: -30, headX: -22, headY: 35,
+                    lArmX: -85, lArmZ: 60, lElbowX: -95,
+                    rArmX: -75, rArmZ: -40, rElbowX: -100,
+                    lLegX: 20, lLegZ: -15, lKneeX: 40,
+                    rLegX: -45, rLegZ: 10, rKneeX: 80,
+                    axeScale: 1.0, axeRotX: 80, axeRotY: -45, axeRotZ: 30, axePosX: 0, axePosY: -0.2, axePosZ: 0
+                }
+            };
+
+            const p = presets[presetKey] || presets.default;
+            setSlider('bodyRotY', 'bodyRotYVal', p.bodyY);
+            setSlider('headRotX', 'headRotXVal', p.headX);
+            setSlider('headRotY', 'headRotYVal', p.headY);
+            setSlider('leftArmX', 'leftArmXVal', p.lArmX);
+            setSlider('leftArmZ', 'leftArmZVal', p.lArmZ);
+            setSlider('leftElbowX', 'leftElbowXVal', p.lElbowX);
+            setSlider('rightArmX', 'rightArmXVal', p.rArmX);
+            setSlider('rightArmZ', 'rightArmZVal', p.rArmZ);
+            setSlider('rightElbowX', 'rightElbowXVal', p.rElbowX);
+            setSlider('leftLegX', 'leftLegXVal', p.lLegX);
+            setSlider('leftLegZ', 'leftLegZVal', p.lLegZ);
+            setSlider('leftKneeX', 'leftKneeXVal', p.lKneeX);
+            setSlider('rightLegX', 'rightLegXVal', p.rLegX);
+            setSlider('rightLegZ', 'rightLegZVal', p.rLegZ);
+            setSlider('rightKneeX', 'rightKneeXVal', p.rKneeX);
+
+            // Axe transform presets
+            document.getElementById('axeScale').value = p.axeScale;
+            document.getElementById('axeRotX').value = p.axeRotX;
+            document.getElementById('axeRotY').value = p.axeRotY;
+            document.getElementById('axeRotZ').value = p.axeRotZ;
+            document.getElementById('axePosX').value = p.axePosX;
+            document.getElementById('axePosY').value = p.axePosY;
+            document.getElementById('axePosZ').value = p.axePosZ;
+
+            updatePose();
+            updateAxeTransform();
+        }
+
+        function exportPNG() {
+            renderer.render(scene, camera);
+            const dataURL = renderer.domElement.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'minotaur_blockbench_sprite_800x2000.png';
+            link.href = dataURL;
+            link.click();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.onload = function() {
+            init();
+        };
+    </script>
+</body>
+</html>

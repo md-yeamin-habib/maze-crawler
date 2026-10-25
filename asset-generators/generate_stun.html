@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Low-Poly Wizard Electric Stun Generator (Blue Robe)</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        h2, h3 { margin-bottom: 5px; text-align: center; }
+        .section {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            width: 90%;
+            max-width: 800px;
+        }
+        .grid {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .card {
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        canvas {
+            background: transparent;
+            border: 1px dashed #475569;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        button {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>⚡ Low-Poly Wizard Stun Builder (Blue Robe)</h2>
+    <p style="color: #94a3b8; margin-top: 0;">2-Frame Electric Stun Loop — Compact Hat with Gold Band</p>
+
+    <div class="section">
+        <h3>Indigo Robe Stun Loop</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>Stun 1 (Black Body / White Outlines)</h4>
+                <canvas id="blue_st1" width="280" height="280"></canvas>
+                <button onclick="downloadAsset('blue_st1', 'player_blue_stun1.png')">Download Stun 1</button>
+            </div>
+            <div class="card">
+                <h4>Stun 2 (Normal Colors / Yellow Aura)</h4>
+                <canvas id="blue_st2" width="280" height="280"></canvas>
+                <button onclick="downloadAsset('blue_st2', 'player_blue_stun2.png')">Download Stun 2</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function drawElectricalAura(ctx, cx, cy, variant) {
+            ctx.fillStyle = '#facc15';
+            ctx.strokeStyle = '#eab308';
+            ctx.lineWidth = 1.5;
+
+            ctx.beginPath();
+
+            if (variant === 1) {
+                ctx.moveTo(cx, cy - 245);
+                ctx.lineTo(cx + 18, cy - 230);
+                ctx.lineTo(cx + 12, cy - 215);
+                ctx.lineTo(cx + 32, cy - 210);
+                ctx.lineTo(cx + 25, cy - 190);
+                ctx.lineTo(cx + 48, cy - 180);
+                ctx.lineTo(cx + 38, cy - 165);
+                ctx.lineTo(cx + 62, cy - 155);
+                ctx.lineTo(cx + 50, cy - 140);
+                ctx.lineTo(cx + 72, cy - 125);
+                ctx.lineTo(cx + 58, cy - 110);
+                ctx.lineTo(cx + 82, cy - 95);
+                ctx.lineTo(cx + 62, cy - 80);
+                ctx.lineTo(cx + 78, cy - 60);
+                ctx.lineTo(cx + 55, cy - 50);
+                ctx.lineTo(cx + 68, cy - 30);
+                ctx.lineTo(cx + 45, cy - 20);
+                ctx.lineTo(cx + 52, cy + 0);
+                ctx.lineTo(cx + 30, cy - 2);
+                ctx.lineTo(cx + 38, cy + 18);
+                ctx.lineTo(cx + 15, cy + 8);
+                ctx.lineTo(cx, cy + 22);
+                ctx.lineTo(cx - 15, cy + 8);
+                ctx.lineTo(cx - 38, cy + 18);
+                ctx.lineTo(cx - 30, cy - 2);
+                ctx.lineTo(cx - 52, cy + 0);
+                ctx.lineTo(cx - 45, cy - 20);
+                ctx.lineTo(cx - 68, cy - 30);
+                ctx.lineTo(cx - 55, cy - 50);
+                ctx.lineTo(cx - 78, cy - 60);
+                ctx.lineTo(cx - 62, cy - 80);
+                ctx.lineTo(cx - 82, cy - 95);
+                ctx.lineTo(cx - 58, cy - 110);
+                ctx.lineTo(cx - 72, cy - 125);
+                ctx.lineTo(cx - 50, cy - 140);
+                ctx.lineTo(cx - 62, cy - 155);
+                ctx.lineTo(cx - 38, cy - 165);
+                ctx.lineTo(cx - 48, cy - 180);
+                ctx.lineTo(cx - 25, cy - 190);
+                ctx.lineTo(cx - 32, cy - 210);
+                ctx.lineTo(cx - 12, cy - 215);
+                ctx.lineTo(cx - 18, cy - 230);
+            } else {
+                ctx.moveTo(cx, cy - 250);
+                ctx.lineTo(cx + 22, cy - 225);
+                ctx.lineTo(cx + 15, cy - 212);
+                ctx.lineTo(cx + 38, cy - 205);
+                ctx.lineTo(cx + 28, cy - 185);
+                ctx.lineTo(cx + 52, cy - 175);
+                ctx.lineTo(cx + 42, cy - 160);
+                ctx.lineTo(cx + 68, cy - 150);
+                ctx.lineTo(cx + 52, cy - 135);
+                ctx.lineTo(cx + 78, cy - 120);
+                ctx.lineTo(cx + 60, cy - 105);
+                ctx.lineTo(cx + 85, cy - 90);
+                ctx.lineTo(cx + 65, cy - 75);
+                ctx.lineTo(cx + 82, cy - 55);
+                ctx.lineTo(cx + 58, cy - 45);
+                ctx.lineTo(cx + 72, cy - 25);
+                ctx.lineTo(cx + 48, cy - 15);
+                ctx.lineTo(cx + 58, cy + 8);
+                ctx.lineTo(cx + 32, cy + 2);
+                ctx.lineTo(cx + 25, cy + 22);
+                ctx.lineTo(cx, cy + 12);
+                ctx.lineTo(cx - 25, cy + 22);
+                ctx.lineTo(cx - 32, cy + 2);
+                ctx.lineTo(cx - 58, cy + 8);
+                ctx.lineTo(cx - 48, cy - 15);
+                ctx.lineTo(cx - 72, cy - 25);
+                ctx.lineTo(cx - 58, cy - 45);
+                ctx.lineTo(cx - 82, cy - 55);
+                ctx.lineTo(cx - 65, cy - 75);
+                ctx.lineTo(cx - 85, cy - 90);
+                ctx.lineTo(cx - 60, cy - 105);
+                ctx.lineTo(cx - 78, cy - 120);
+                ctx.lineTo(cx - 52, cy - 135);
+                ctx.lineTo(cx - 68, cy - 150);
+                ctx.lineTo(cx - 42, cy - 160);
+                ctx.lineTo(cx - 52, cy - 175);
+                ctx.lineTo(cx - 28, cy - 185);
+                ctx.lineTo(cx - 38, cy - 205);
+                ctx.lineTo(cx - 15, cy - 212);
+                ctx.lineTo(cx - 22, cy - 225);
+            }
+
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function drawStunFrame(ctx, w, h, config, isBlackSilhouette, auraVariant) {
+            ctx.clearRect(0, 0, w, h);
+            const cx = w / 2;
+            const cy = h / 2 + 105;
+
+            // 1. AURA
+            drawElectricalAura(ctx, cx, cy, auraVariant);
+
+            // Palette
+            const robeMain = isBlackSilhouette ? '#000000' : config.robeMain;
+            const robeShadow = isBlackSilhouette ? '#000000' : config.robeShadow;
+            const pantsColor = isBlackSilhouette ? '#000000' : config.pantsColor;
+            const bootColor = isBlackSilhouette ? '#000000' : config.bootColor;
+            const skinColor = isBlackSilhouette ? '#000000' : config.skinColor;
+            const neckColor = isBlackSilhouette ? '#000000' : config.neckColor;
+            const hatBand = isBlackSilhouette ? '#000000' : config.hatBand;
+            const strokeColor = isBlackSilhouette ? '#ffffff' : config.strokeColor;
+            const strokeWidth = isBlackSilhouette ? 2.0 : 1.5;
+
+            // --- 2. LEGS & BOOTS ---
+            ctx.fillStyle = pantsColor;
+            ctx.fillRect(cx - 18, cy - 110, 12, 90);
+            ctx.fillRect(cx + 6, cy - 110, 12, 90);
+
+            ctx.fillStyle = bootColor;
+            ctx.fillRect(cx - 20, cy - 20, 16, 20);
+            ctx.fillRect(cx + 4, cy - 20, 16, 20);
+
+            if (isBlackSilhouette) {
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = strokeWidth;
+                ctx.strokeRect(cx - 18, cy - 110, 12, 90);
+                ctx.strokeRect(cx + 6, cy - 110, 12, 90);
+                ctx.strokeRect(cx - 20, cy - 20, 16, 20);
+                ctx.strokeRect(cx + 4, cy - 20, 16, 20);
+            }
+
+            // --- 3. ROBE BODY ---
+            ctx.fillStyle = robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 150);
+            ctx.lineTo(cx + 22, cy - 150);
+            ctx.lineTo(cx + 36, cy - 54);
+            ctx.lineTo(cx - 36, cy - 54);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 150);
+            ctx.lineTo(cx, cy - 145);
+            ctx.lineTo(cx - 6, cy - 54);
+            ctx.lineTo(cx - 36, cy - 54);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = strokeWidth;
+            ctx.stroke();
+
+            if (isBlackSilhouette) {
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - 145);
+                ctx.lineTo(cx - 6, cy - 54);
+                ctx.stroke();
+            }
+
+            // --- 4. SLEEVES & ARMS ---
+            // Left Sleeve
+            ctx.fillStyle = robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 146);
+            ctx.lineTo(cx - 52, cy - 115);
+            ctx.lineTo(cx - 40, cy - 105);
+            ctx.lineTo(cx - 22, cy - 120);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Right Sleeve
+            ctx.fillStyle = robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx + 22, cy - 146);
+            ctx.lineTo(cx + 52, cy - 115);
+            ctx.lineTo(cx + 40, cy - 105);
+            ctx.lineTo(cx + 22, cy - 120);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Hands
+            ctx.fillStyle = skinColor;
+            ctx.beginPath();
+            ctx.moveTo(cx - 52, cy - 115);
+            ctx.lineTo(cx - 58, cy - 108);
+            ctx.lineTo(cx - 46, cy - 98);
+            ctx.lineTo(cx - 40, cy - 105);
+            ctx.closePath();
+            ctx.fill();
+            if (isBlackSilhouette) ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(cx + 52, cy - 115);
+            ctx.lineTo(cx + 58, cy - 108);
+            ctx.lineTo(cx + 46, cy - 98);
+            ctx.lineTo(cx + 40, cy - 105);
+            ctx.closePath();
+            ctx.fill();
+            if (isBlackSilhouette) ctx.stroke();
+
+            // --- 5. NECK & HEAD ---
+            ctx.fillStyle = neckColor;
+            ctx.fillRect(cx - 6, cy - 162, 12, 14);
+            if (isBlackSilhouette) {
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = strokeWidth;
+                ctx.strokeRect(cx - 6, cy - 162, 12, 14);
+            }
+
+            ctx.fillStyle = skinColor;
+            ctx.beginPath();
+            ctx.arc(cx, cy - 176, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = strokeWidth;
+            ctx.stroke();
+
+            // --- 6. ORIGINAL COMPACT HAT WITH GOLD BAND ---
+            // Brim
+            ctx.fillStyle = robeMain;
+            ctx.beginPath();
+            ctx.ellipse(cx, cy - 186, 32, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = strokeWidth;
+            ctx.stroke();
+
+            // Gold Band
+            ctx.fillStyle = hatBand;
+            ctx.beginPath();
+            ctx.ellipse(cx, cy - 188, 20, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            if (isBlackSilhouette) ctx.stroke();
+
+            // Cone
+            ctx.fillStyle = robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx - 18, cy - 188);
+            ctx.lineTo(cx + 18, cy - 188);
+            ctx.lineTo(cx + 4, cy - 232);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = strokeWidth;
+            ctx.stroke();
+        }
+
+        const blueConfig = {
+            robeMain: '#312e81',
+            robeShadow: '#3730a3',
+            pantsColor: '#1e1b4b',
+            bootColor: '#0f172a',
+            skinColor: '#ffedd5',
+            neckColor: '#e2e8f0',
+            hatBand: '#d97706',
+            strokeColor: '#0f172a'
+        };
+
+        // Render Stun 1 & Stun 2
+        drawStunFrame(document.getElementById('blue_st1').getContext('2d'), 280, 280, blueConfig, true, 1);
+        drawStunFrame(document.getElementById('blue_st2').getContext('2d'), 280, 280, blueConfig, false, 2);
+
+        function downloadAsset(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+
+</body>
+</html>

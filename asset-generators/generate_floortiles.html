@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Amber Plank Wall Asset Generator</title>
+    <style>
+        body { background: #0f172a; color: #fef3c7; font-family: 'Georgia', serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .grid { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+        .card { background: #1e293b; border: 2px solid #334155; border-radius: 12px; padding: 16px; text-align: center; }
+        canvas { background: #000; border: 1px dashed #475569; border-radius: 8px; margin-bottom: 12px; display: block; }
+        button { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fef3c7; border: 1px solid #fbbf24; padding: 8px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>🪵 Amber Plank Wall Asset Builder</h2>
+    <div class="grid" id="assetGrid"></div>
+
+    <script>
+        function createCard(title, id, w, h, filename) {
+            document.getElementById('assetGrid').innerHTML += `
+                <div class="card">
+                    <h3>${title}</h3>
+                    <canvas id="${id}" width="${w}" height="${h}"></canvas><br>
+                    <button onclick="download('${id}', '${filename}')">Download</button>
+                </div>`;
+        }
+
+        // 1. Flat vertical amber plank wall (First Reference Image)
+        function drawFlatAmberWall(ctx, w, h) {
+            ctx.fillStyle = '#2d180a';
+            ctx.fillRect(0, 0, w, h);
+
+            let numPlanks = 6;
+            let plankW = w / numPlanks;
+
+            for (let i = 0; i < numPlanks; i++) {
+                let x = i * plankW;
+                // Plank base gradient for low-poly amber look
+                let grad = ctx.createLinearGradient(x, 0, x + plankW, 0);
+                grad.addColorStop(0, '#1a0d05');
+                grad.addColorStop(0.5, '#4a2612');
+                grad.addColorStop(1, '#1a0d05');
+                ctx.fillStyle = grad;
+                ctx.fillRect(x + 1, 0, plankW - 2, h);
+
+                // Divider line
+                ctx.fillStyle = '#0f0703';
+                ctx.fillRect(x, 0, 2, h);
+            }
+
+            // Soft center lighting highlight
+            let lightGrad = ctx.createRadialGradient(w/2, h/2, 10, w/2, h/2, w*0.6);
+            lightGrad.addColorStop(0, 'rgba(180, 110, 50, 0.25)');
+            lightGrad.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
+            ctx.fillStyle = lightGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.strokeStyle = '#0f0703';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(0, 0, w, h);
+        }
+
+        // 2. Beveled/Angled corner amber plank wall (Second Reference Image)
+        function drawCornerAmberWall(ctx, w, h) {
+            ctx.fillStyle = '#2d180a';
+            ctx.fillRect(0, 0, w, h);
+
+            let midX = w / 2;
+
+            // Left panel side
+            let gradLeft = ctx.createLinearGradient(0, 0, midX, 0);
+            gradLeft.addColorStop(0, '#150a04');
+            gradLeft.addColorStop(1, '#3d200e');
+            ctx.fillStyle = gradLeft;
+            ctx.fillRect(0, 0, midX, h);
+
+            // Right panel side (darker for corner bevel effect)
+            let gradRight = ctx.createLinearGradient(midX, 0, w, 0);
+            gradRight.addColorStop(0, '#3d200e');
+            gradRight.addColorStop(1, '#150a04');
+            ctx.fillStyle = gradRight;
+            ctx.fillRect(midX, 0, w - midX, h);
+
+            // Center vertical crease/bevel line
+            ctx.fillStyle = '#0a0402';
+            ctx.fillRect(midX - 2, 0, 4, h);
+
+            // Soft center lighting highlight
+            let lightGrad = ctx.createRadialGradient(w/2, h/2, 10, w/2, h/2, w*0.6);
+            lightGrad.addColorStop(0, 'rgba(180, 110, 50, 0.2)');
+            lightGrad.addColorStop(1, 'rgba(0, 0, 0, 0.45)');
+            ctx.fillStyle = lightGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.strokeStyle = '#0f0703';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(0, 0, w, h);
+        }
+
+        createCard('Flat Outer Wall', 'wallFlat', 256, 256, 'library_outer_wall.png');
+        createCard('Corner Outer Wall', 'wallCorner', 256, 256, 'library_outer_wall_corner.png');
+
+        drawFlatAmberWall(document.getElementById('wallFlat').getContext('2d'), 256, 256);
+        drawCornerAmberWall(document.getElementById('wallCorner').getContext('2d'), 256, 256);
+
+        function download(id, filename) {
+            let link = document.createElement('a');
+            link.download = filename;
+            link.href = document.getElementById(id).toDataURL();
+            link.click();
+        }
+    </script>
+</body>
+</html>

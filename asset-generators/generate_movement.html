@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Low-Poly Wizard Movement Generator (Aligned Arms & Proportional Shoulders)</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        h2, h3 { margin-bottom: 5px; text-align: center; }
+        .section {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            width: 90%;
+            max-width: 950px;
+        }
+        .grid {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .card {
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        canvas {
+            background: transparent;
+            border: 1px dashed #475569;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        button {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🧙‍♂️ Low-Poly Wizard Movement Builder</h2>
+    <p style="color: #94a3b8; margin-top: 0;">Walking Cycle (Aligned Hands & Proportional Torso) — Back POV</p>
+
+    <!-- GRAY ROBE WALKING -->
+    <div class="section">
+        <h3>Gray Robe Walk Cycle (Level 1)</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>Walk 1 (Left Lead)</h4>
+                <canvas id="gray_w1" width="256" height="256"></canvas>
+                <button onclick="downloadAsset('gray_w1', 'player_gray_walk1.png')">Download W1</button>
+            </div>
+            <div class="card">
+                <h4>Walk 2 (Passing)</h4>
+                <canvas id="gray_w2" width="256" height="256"></canvas>
+                <button onclick="downloadAsset('gray_w2', 'player_gray_walk2.png')">Download W2</button>
+            </div>
+            <div class="card">
+                <h4>Walk 3 (Right Lead)</h4>
+                <canvas id="gray_w3" width="256" height="256"></canvas>
+                <button onclick="downloadAsset('gray_w3', 'player_gray_walk3.png')">Download W3</button>
+            </div>
+            <div class="card">
+                <h4>Walk 4 (Passing)</h4>
+                <canvas id="gray_w4" width="256" height="256"></canvas>
+                <button onclick="downloadAsset('gray_w4', 'player_gray_walk4.png')">Download W4</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- INDIGO ROBE WALKING -->
+    <div class="section">
+        <h3>Indigo Robe Walk Cycle (Ascended)</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>Walk 1 (Left Lead)</h4>
+                <canvas id="blue_w1" width="256" height="256"></canvas>
+                <button onclick="downloadAsset('blue_w1', 'player_blue_walk1.png')">Download W1</button>
+            </div>
+            <div class="card">
+                <h4>Walk 2 (Passing)</h4>
+                <canvas id="blue_w2" width="256" height="256"></canvas>
+                <button onclick="downloadAsset('blue_w2', 'player_blue_walk2.png')">Download W2</button>
+            </div>
+            <div class="card">
+                <h4>Walk 3 (Right Lead)</h4>
+                <canvas id="blue_w3" width="256" height="256"></canvas>
+                <button onclick="downloadAsset('blue_w3', 'player_blue_walk3.png')">Download W3</button>
+            </div>
+            <div class="card">
+                <h4>Walk 4 (Passing)</h4>
+                <canvas id="blue_w4" width="256" height="256"></canvas>
+                <button onclick="downloadAsset('blue_w4', 'player_blue_walk4.png')">Download W4</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function drawWalkFrame(ctx, w, h, config, stepProgress) {
+            ctx.clearRect(0, 0, w, h);
+            const cx = w / 2;
+            const cy = h / 2 + 105;
+
+            // Leg stride shifts
+            let legL_Y = stepProgress * -8;
+            let legR_Y = stepProgress * 8;
+
+            // --- 1. CONTINUOUS LEGS (Deep inside torso) ---
+            ctx.fillStyle = config.pantsColor;
+            ctx.fillRect(cx - 18, cy - 110, 12, 90 + legL_Y);
+            ctx.fillRect(cx + 6, cy - 110, 12, 90 + legR_Y);
+
+            ctx.fillStyle = config.bootColor;
+            ctx.fillRect(cx - 20, cy - 20 + legL_Y, 16, 20);
+            ctx.fillRect(cx + 4, cy - 20 + legR_Y, 16, 20);
+
+            // --- 2. ROBE BODY (Wider Shoulders matching Idle State) ---
+            ctx.fillStyle = config.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 150); // Left shoulder (widened)
+            ctx.lineTo(cx + 22, cy - 150); // Right shoulder (widened)
+            ctx.lineTo(cx + 36, cy - 54);  // Right hem
+            ctx.lineTo(cx - 36, cy - 54);  // Left hem
+            ctx.closePath();
+            ctx.fill();
+
+            // Shadow Fold
+            ctx.fillStyle = config.robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 150);
+            ctx.lineTo(cx, cy - 145);
+            ctx.lineTo(cx - 6, cy - 54);
+            ctx.lineTo(cx - 36, cy - 54);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = config.strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // --- 3. SLEEVES & ALIGNED HANDS ---
+            let isLeftForward = (stepProgress > 0);
+            let isRightForward = (stepProgress < 0);
+
+            // Left Arm
+            ctx.fillStyle = config.robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 146);
+            if (isLeftForward) {
+                // Extended forward arm (~5deg out)
+                ctx.lineTo(cx - 52, cy - 105);
+                ctx.lineTo(cx - 40, cy - 95);
+            } else {
+                // Tucked back arm (1-2deg out from body edge)
+                ctx.lineTo(cx - 40, cy - 102);
+                ctx.lineTo(cx - 28, cy - 96);
+            }
+            ctx.lineTo(cx - 22, cy - 120);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Right Arm
+            ctx.fillStyle = config.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx + 22, cy - 146);
+            if (isRightForward) {
+                // Extended forward arm (~5deg out)
+                ctx.lineTo(cx + 52, cy - 105);
+                ctx.lineTo(cx + 40, cy - 95);
+            } else {
+                // Tucked back arm (1-2deg out from body edge)
+                ctx.lineTo(cx + 40, cy - 102);
+                ctx.lineTo(cx + 28, cy - 96);
+            }
+            ctx.lineTo(cx + 22, cy - 120);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Aligned Hands (Drawn as aligned rectangular cuff extensions)
+            ctx.fillStyle = config.skinColor;
+            if (isLeftForward) {
+                ctx.beginPath();
+                ctx.moveTo(cx - 52, cy - 105);
+                ctx.lineTo(cx - 58, cy - 98);
+                ctx.lineTo(cx - 46, cy - 88);
+                ctx.lineTo(cx - 40, cy - 95);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(cx - 40, cy - 102);
+                ctx.lineTo(cx - 44, cy - 95);
+                ctx.lineTo(cx - 32, cy - 89);
+                ctx.lineTo(cx - 28, cy - 96);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            if (isRightForward) {
+                ctx.beginPath();
+                ctx.moveTo(cx + 52, cy - 105);
+                ctx.lineTo(cx + 58, cy - 98);
+                ctx.lineTo(cx + 46, cy - 88);
+                ctx.lineTo(cx + 40, cy - 95);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(cx + 40, cy - 102);
+                ctx.lineTo(cx + 44, cy - 95);
+                ctx.lineTo(cx + 32, cy - 89);
+                ctx.lineTo(cx + 28, cy - 96);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // --- 4. NECK & HEAD ---
+            ctx.fillStyle = config.neckColor;
+            ctx.fillRect(cx - 6, cy - 162, 12, 14);
+
+            ctx.fillStyle = config.skinColor;
+            ctx.beginPath();
+            ctx.arc(cx, cy - 176, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = config.headStroke;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        const grayConfig = {
+            robeMain: '#64748b', robeShadow: '#475569', pantsColor: '#334155', bootColor: '#0f172a',
+            skinColor: '#ffedd5', neckColor: '#e2e8f0', strokeColor: '#0f172a', headStroke: '#cbd5e1'
+        };
+
+        const blueConfig = {
+            robeMain: '#312e81', robeShadow: '#3730a3', pantsColor: '#1e1b4b', bootColor: '#0f172a',
+            skinColor: '#ffedd5', neckColor: '#e2e8f0', strokeColor: '#0f172a', headStroke: '#cbd5e1'
+        };
+
+        // Render Gray Robe Walking Cycle
+        drawWalkFrame(document.getElementById('gray_w1').getContext('2d'), 256, 256, grayConfig, -1.0);
+        drawWalkFrame(document.getElementById('gray_w2').getContext('2d'), 256, 256, grayConfig, 0.0);
+        drawWalkFrame(document.getElementById('gray_w3').getContext('2d'), 256, 256, grayConfig, 1.0);
+        drawWalkFrame(document.getElementById('gray_w4').getContext('2d'), 256, 256, grayConfig, 0.0);
+
+        // Render Indigo Blue Robe Walking Cycle
+        drawWalkFrame(document.getElementById('blue_w1').getContext('2d'), 256, 256, blueConfig, -1.0);
+        drawWalkFrame(document.getElementById('blue_w2').getContext('2d'), 256, 256, blueConfig, 0.0);
+        drawWalkFrame(document.getElementById('blue_w3').getContext('2d'), 256, 256, blueConfig, 1.0);
+        drawWalkFrame(document.getElementById('blue_w4').getContext('2d'), 256, 256, blueConfig, 0.0);
+
+        function downloadAsset(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+
+</body>
+</html>

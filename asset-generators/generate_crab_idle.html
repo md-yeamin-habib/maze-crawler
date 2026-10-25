@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Definitive Side Profile Crab Generator - Final</title>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 { color: #ef4444; margin-bottom: 5px; }
+        p { color: #94a3b8; font-size: 14px; margin-top: 0; }
+        .controls {
+            margin: 20px 0;
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 8px;
+            display: inline-block;
+            border: 1px solid #334155;
+        }
+        button {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: #fef3c7;
+            border: 1px solid #fca5a5;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover { opacity: 0.9; }
+        button.active { border: 2px solid #ffffff; box-shadow: 0 0 14px rgba(239, 68, 68, 0.9); }
+        .canvas-container {
+            background: #ffffff;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 10px;
+            display: inline-block;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            margin-top: 10px;
+        }
+        canvas { display: block; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <h1>Definitive Side Profile Crab Generator</h1>
+    <p>Perfected Leg Spread, Volumetric 3Segments & Correct Layering</p>
+
+    <div class="controls">
+        <button id="btn1" onclick="setFrame(1)" class="active">Frame 1: Both Closed</button>
+        <button id="btn2" onclick="setFrame(2)">Frame 2: Near Open</button>
+        <button id="btn3" onclick="setFrame(3)">Frame 3: Far Open</button>
+        <br><br>
+        <button onclick="downloadAsset()" style="background: linear-gradient(135deg, #059669, #10b981);">Download Side PNG</button>
+    </div>
+
+    <br>
+    <div class="canvas-container">
+        <canvas id="crabCanvas" width="500" height="480"></canvas>
+    </div>
+
+    <script>
+        let currentFrame = 1; // 1: Both Closed, 2: Near Open, 3: Far Open
+
+        function setFrame(frameNum) {
+            currentFrame = frameNum;
+            document.getElementById('btn1').className = (frameNum === 1) ? 'active' : '';
+            document.getElementById('btn2').className = (frameNum === 2) ? 'active' : '';
+            document.getElementById('btn3').className = (frameNum === 3) ? 'active' : '';
+            renderAsset();
+        }
+
+        function renderAsset() {
+            const canvas = document.getElementById('crabCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2 + 10);
+            
+            let scale = 2.0;
+            ctx.scale(scale, scale);
+
+            const colPrimary   = '#dc2626';
+            const colShadow    = '#b91c1c';
+            const colDeepCore  = '#991b1b';
+            const colOutline   = '#450a0a';
+
+            function drawPolygon(points, fillColor) {
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+                for (let p = 1; p < points.length; p++) {
+                    ctx.lineTo(points[p].x, points[p].y);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = colOutline;
+                ctx.lineWidth = 1.1;
+                ctx.stroke();
+            }
+
+            const baselineY = 12; // Attached along the bottom edge baseline
+
+            // ==========================================
+            // LAYER 1: FURTHER LEGS (Rendered First - Behind)
+            // ==========================================
+            for (let i = 0; i < 4; i++) {
+                let baseX = -6 + (i * 4); 
+                let tipX = -40 + (i * 12); 
+                let midX = (baseX + tipX) / 2;
+
+                drawPolygon([
+                    {x: baseX - 2, y: baselineY}, {x: baseX + 3, y: baselineY}, 
+                    {x: midX + 3, y: baselineY - 16}, {x: midX - 3, y: baselineY - 14}
+                ], colDeepCore);
+
+                drawPolygon([
+                    {x: midX - 3, y: baselineY - 14}, {x: midX + 3, y: baselineY - 16}, 
+                    {x: tipX + 4, y: baselineY - 30}, {x: tipX - 2, y: baselineY - 28}
+                ], colShadow);
+
+                drawPolygon([
+                    {x: tipX - 2, y: baselineY - 28}, {x: tipX + 4, y: baselineY - 30}, 
+                    {x: tipX + 3, y: baselineY - 42}, {x: tipX - 3, y: baselineY - 40}
+                ], colPrimary);
+            }
+
+            // ==========================================
+            // LAYER 2: TORSO, EYES & CLAWS (Middle)
+            // ==========================================
+
+            // Further Claw (Scaled down for depth)
+            let farOpen = (currentFrame === 3);
+            ctx.save();
+            ctx.translate(-6, -12);
+            ctx.scale(0.82, 0.82);
+
+            ctx.fillStyle = colDeepCore;
+            ctx.beginPath();
+            ctx.arc(0, 0, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = colOutline;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            drawPolygon([{x: 0, y: 0}, {x: -12, y: -16}, {x: -8, y: -24}, {x: 4, y: -8}], colShadow);
+            drawPolygon([{x: -12, y: -16}, {x: -22, y: -32}, {x: -15, y: -40}, {x: -6, y: -26}], colDeepCore);
+
+            ctx.save();
+            ctx.translate(-15, -40);
+            if (farOpen) { ctx.rotate(0.55); } else { ctx.rotate(0.05); }
+            ctx.translate(15, 40);
+            drawPolygon([
+                {x: -15, y: -40}, {x: -26, y: -28}, {x: -34, y: -40}, {x: -24, y: -50}
+            ], colDeepCore);
+            ctx.restore();
+
+            drawPolygon([{x: -15, y: -40}, {x: -35, y: -58}, {x: -25, y: -72}, {x: -8, y: -50}], colShadow);
+            ctx.restore();
+
+            // Carapace Body
+            drawPolygon([
+                {x: -18, y: -16}, {x: 18, y: -16}, {x: 14, y: 16}, {x: -14, y: 16}
+            ], colPrimary);
+
+            drawPolygon([{x: 0, y: -22}, {x: -14, y: -12}, {x: -12, y: 12}, {x: 0, y: 16}], colPrimary);
+            drawPolygon([{x: 0, y: -22}, {x: 14, y: -12}, {x: 12, y: 12}, {x: 0, y: 16}], colShadow);
+            drawPolygon([{x: 0, y: -22}, {x: -4, y: -4}, {x: 0, y: 16}, {x: 4, y: -4}], colDeepCore);
+
+            // Eye Stalk & Upper Semicircle Eye
+            drawPolygon([
+                {x: 5, y: -14}, {x: 9, y: -14}, {x: 8, y: -26}, {x: 4, y: -26}
+            ], colDeepCore);
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(6.5, -26, 2.8, Math.PI, 0, false);
+            ctx.fill();
+            ctx.strokeStyle = colOutline;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Nearer Claw (Full size, independent animation)
+            let nearOpen = (currentFrame === 2);
+            ctx.save();
+            ctx.translate(12, -12);
+
+            ctx.fillStyle = colDeepCore;
+            ctx.beginPath();
+            ctx.arc(0, 0, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = colOutline;
+            ctx.lineWidth = 1.1;
+            ctx.stroke();
+
+            drawPolygon([{x: 0, y: 0}, {x: 14, y: -18}, {x: 10, y: -26}, {x: -4, y: -8}], colPrimary);
+            drawPolygon([{x: 14, y: -18}, {x: 26, y: -36}, {x: 18, y: -44}, {x: 8, y: -26}], colShadow);
+
+            ctx.save();
+            ctx.translate(18, -44);
+            if (nearOpen) { ctx.rotate(-0.55); } else { ctx.rotate(-0.05); }
+            ctx.translate(-18, 44);
+
+            drawPolygon([
+                {x: 18, y: -44}, {x: 32, y: -32}, {x: 40, y: -44}, {x: 28, y: -54}
+            ], colShadow);
+            ctx.restore();
+
+            drawPolygon([{x: 18, y: -44}, {x: 42, y: -62}, {x: 30, y: -78}, {x: 12, y: -56}], colPrimary);
+            ctx.restore();
+
+            // ==========================================
+            // LAYER 3: NEARER LEGS (Rendered Last - In Front)
+            // Clustered bases on baseline, wide fanned tips
+            // ==========================================
+            for (let i = 0; i < 4; i++) {
+                let baseX = -5 + (i * 3.5); 
+                let tipX = -34 + (i * 24); // Wide aggressive splay matching your MS Paint mockup
+                let midX = (baseX + tipX) / 2;
+
+                drawPolygon([
+                    {x: baseX - 2, y: baselineY}, {x: baseX + 3, y: baselineY}, 
+                    {x: midX + 3, y: baselineY + 16}, {x: midX - 3, y: baselineY + 14}
+                ], colPrimary);
+
+                drawPolygon([
+                    {x: midX - 3, y: baselineY + 14}, {x: midX + 3, y: baselineY + 16}, 
+                    {x: tipX + 4, y: baselineY + 30}, {x: tipX - 2, y: baselineY + 28}
+                ], colShadow);
+
+                drawPolygon([
+                    {x: tipX - 2, y: baselineY + 28}, {x: tipX + 4, y: baselineY + 30}, 
+                    {x: tipX + 3, y: baselineY + 42}, {x: tipX - 3, y: baselineY + 40}
+                ], colDeepCore);
+            }
+
+            ctx.restore();
+        }
+
+        function downloadAsset() {
+            const canvas = document.getElementById('crabCanvas');
+            const link = document.createElement('a');
+            link.download = `crab_idle_side_frame${currentFrame}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        window.onload = renderAsset;
+    </script>
+
+</body>
+</html>

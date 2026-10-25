@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.5D Squished Swimming Generator (Refined Leg Proportions)</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        h2, h3 { margin-bottom: 5px; text-align: center; }
+        .section {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            width: 90%;
+            max-width: 1050px;
+        }
+        .grid {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .card {
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        canvas {
+            background: transparent;
+            border: 1px dashed #475569;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        button {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🧙‍♂️ 2.5D Refined Swimming Asset Generator</h2>
+    <p style="color: #94a3b8; margin-top: 0;">Thicker Legs (18px base) & Subtle 2-3px Trapezium Variations</p>
+
+    <div class="section">
+        <h3>Indigo Robe 2.5D Swim Cycle (6 Frames)</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>Swim 1 (Glide - Rectangles)</h4>
+                <canvas id="blue_s1" width="256" height="256"></canvas>
+                <button onclick="downloadAsset('blue_s1', 'player_blue_swim1.png')">Download S1</button>
+            </div>
+            <div class="card">
+                <h4>Swim 2 (Left Inv / Right Up)</h4>
+                <canvas id="blue_s2" width="256" height="256"></canvas>
+                <button onclick="downloadAsset('blue_s2', 'player_blue_swim2.png')">Download S2</button>
+            </div>
+            <div class="card">
+                <h4>Swim 3 (Mid - Rectangles)</h4>
+                <canvas id="blue_s3" width="256" height="256"></canvas>
+                <button onclick="downloadAsset('blue_s3', 'player_blue_swim3.png')">Download S3</button>
+            </div>
+            <div class="card">
+                <h4>Swim 4 (Left Up / Right Inv)</h4>
+                <canvas id="blue_s4" width="256" height="256"></canvas>
+                <button onclick="downloadAsset('blue_s4', 'player_blue_swim4.png')">Download S4</button>
+            </div>
+            <div class="card">
+                <h4>Swim 5 (Glide Outward)</h4>
+                <canvas id="blue_s5" width="256" height="256"></canvas>
+                <button onclick="downloadAsset('blue_s5', 'player_blue_swim5.png')">Download S5</button>
+            </div>
+            <div class="card">
+                <h4>Swim 6 (Glide Return)</h4>
+                <canvas id="blue_s6" width="256" height="256"></canvas>
+                <button onclick="downloadAsset('blue_s6', 'player_blue_swim6.png')">Download S6</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const blueConfig = {
+            robeMain: '#312e81', robeShadow: '#3730a3', pantsColor: '#1e1b4b', bootColor: '#0f172a',
+            skinColor: '#ffedd5', neckColor: '#e2e8f0', strokeColor: '#0f172a', headStroke: '#cbd5e1'
+        };
+
+        function drawSquishedHat(ctx, x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Brim
+            ctx.fillStyle = '#312e81';
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.ellipse(0, 3, 34, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Cone
+            ctx.beginPath();
+            ctx.moveTo(0, -30);
+            ctx.lineTo(22, 5);
+            ctx.lineTo(-22, 5);
+            ctx.closePath();
+            ctx.fillStyle = '#3730a3';
+            ctx.fill();
+            ctx.stroke();
+
+            // Cone Highlight Fold
+            ctx.beginPath();
+            ctx.moveTo(0, -30);
+            ctx.lineTo(0, 5);
+            ctx.lineTo(-22, 5);
+            ctx.closePath();
+            ctx.fillStyle = '#4f46e5';
+            ctx.fill();
+
+            // Hatband
+            ctx.fillStyle = '#d97706';
+            ctx.fillRect(-20, 0, 40, 5);
+            ctx.strokeRect(-20, 0, 40, 5);
+
+            ctx.restore();
+        }
+
+        function drawLegPolygon(ctx, centerX, yTop, topW, botW, height, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(centerX - topW / 2, yTop);
+            ctx.lineTo(centerX + topW / 2, yTop);
+            ctx.lineTo(centerX + botW / 2, yTop + height);
+            ctx.lineTo(centerX - botW / 2, yTop + height);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+        }
+
+        function drawSquishedSwimFrame(canvasId, frameIdx) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 256, 256);
+
+            const cx = 128;
+
+            // Synchronized arm sweep (outward and inward)
+            let armSweep = Math.sin((frameIdx / 6) * Math.PI * 2) * 10;
+
+            // --- 1. HEAD & NECK ---
+            ctx.fillStyle = blueConfig.neckColor;
+            ctx.fillRect(cx - 6, 82, 12, 8);
+
+            ctx.fillStyle = blueConfig.skinColor;
+            ctx.beginPath();
+            ctx.arc(cx, 72, 19, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = blueConfig.headStroke;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            drawSquishedHat(ctx, cx, 52);
+
+            // --- 2. SQUISHED ROBE BODY ---
+            const robeTopY = 90;
+            const robeBotY = 158;
+            const robeTopW = 44;
+            const robeBotW = 70;
+
+            ctx.fillStyle = blueConfig.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx - robeTopW / 2, robeTopY);
+            ctx.lineTo(cx + robeTopW / 2, robeTopY);
+            ctx.lineTo(cx + robeBotW / 2, robeBotY);
+            ctx.lineTo(cx - robeBotW / 2, robeBotY);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = blueConfig.robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - robeTopW / 2, robeTopY);
+            ctx.lineTo(cx, robeTopY);
+            ctx.lineTo(cx - 4, robeBotY);
+            ctx.lineTo(cx - robeBotW / 2, robeBotY);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = blueConfig.strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // --- 3. SLEEVES & ARMS ---
+            // Left Sleeve
+            ctx.fillStyle = blueConfig.robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, robeTopY + 2);
+            ctx.lineTo(cx - 56 - armSweep, robeTopY + 22);
+            ctx.lineTo(cx - 46 - armSweep, robeTopY + 34);
+            ctx.lineTo(cx - 22, robeTopY + 18);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = blueConfig.strokeColor;
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            // Right Sleeve
+            ctx.fillStyle = blueConfig.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx + 22, robeTopY + 2);
+            ctx.lineTo(cx + 56 + armSweep, robeTopY + 22);
+            ctx.lineTo(cx + 46 + armSweep, robeTopY + 34);
+            ctx.lineTo(cx + 22, robeTopY + 18);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = blueConfig.strokeColor;
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            // Hands
+            ctx.fillStyle = blueConfig.skinColor;
+            ctx.fillRect(cx - 64 - armSweep, robeTopY + 24, 10, 12);
+            ctx.fillRect(cx + 54 + armSweep, robeTopY + 24, 10, 12);
+
+            // --- 4. LEGS & BOOTS (Thicker 18px Base, Subtle 21px Trapezium Extensions) ---
+            const legTopY = robeBotY;
+            const legHeight = 36;
+            const legSpacing = 18; // Slightly wider spacing to accommodate thicker legs cleanly
+
+            // Base width: 18px (Shorter side of trapezium = 18px, Larger side = 21px)
+            const normW = 18;
+            const largeW = 21;
+
+            let leftTopW = normW, leftBotW = normW;
+            let rightTopW = normW, rightBotW = normW;
+
+            if (frameIdx === 1) {
+                // Frame 2: Left Inverted Trapezium (18px top, 21px bottom), Right Upright Trapezium (21px top, 18px bottom)
+                leftTopW = normW; leftBotW = largeW;
+                rightTopW = largeW; rightBotW = normW;
+            } else if (frameIdx === 3) {
+                // Frame 4: Left Upright Trapezium (21px top, 18px bottom), Right Inverted Trapezium (18px top, 21px bottom)
+                leftTopW = largeW; leftBotW = normW;
+                rightTopW = normW; rightBotW = largeW;
+            } else if (frameIdx === 4) {
+                // Frame 5: Slight glide transition
+                leftTopW = 18; leftBotW = 19.5;
+                rightTopW = 19.5; rightBotW = 18;
+            }
+            // Frames 0, 2, 5 remain standard rectangles (18px, 18px)
+
+            // Draw Left Leg & Boot
+            drawLegPolygon(ctx, cx - legSpacing, legTopY, leftTopW, leftBotW, legHeight, blueConfig.pantsColor);
+            ctx.fillStyle = blueConfig.bootColor;
+            let bootL = leftBotW + 4;
+            ctx.fillRect(cx - legSpacing - bootL / 2, legTopY + legHeight, bootL, 14);
+            ctx.strokeRect(cx - legSpacing - bootL / 2, legTopY + legHeight, bootL, 14);
+
+            // Draw Right Leg & Boot
+            drawLegPolygon(ctx, cx + legSpacing, legTopY, rightTopW, rightBotW, legHeight, blueConfig.pantsColor);
+            ctx.fillStyle = blueConfig.bootColor;
+            let bootR = rightBotW + 4;
+            ctx.fillRect(cx + legSpacing - bootR / 2, legTopY + legHeight, bootR, 14);
+            ctx.strokeRect(cx + legSpacing - bootR / 2, legTopY + legHeight, bootR, 14);
+        }
+
+        window.onload = () => {
+            for (let i = 0; i < 6; i++) {
+                drawSquishedSwimFrame(`blue_s${i+1}`, i);
+            }
+        };
+
+        function downloadAsset(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>

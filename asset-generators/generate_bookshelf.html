@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>6x1 Single-Column Bookshelf Generator (15 Variants)</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 { margin-bottom: 5px; text-align: center; }
+        p.subtitle { color: #94a3b8; margin-top: 0; text-align: center; margin-bottom: 25px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        .card {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+        .card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1rem;
+            color: #38bdf8;
+        }
+        canvas {
+            background: transparent;
+            border: 1px dashed #475569;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        button {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>📚 6-Rack Single-Column Bookshelf Generator</h2>
+    <p class="subtitle">Optimized for 3-block high walls (6 horizontal shelves, single column, random book covers)</p>
+
+    <div class="grid" id="assetGrid"></div>
+
+    <script>
+        const bookColors = ['#991b1b', '#1e40af', '#166534', '#9a3412', '#581c87', '#b45309', '#0f766e', '#831843', '#1e3a8a', '#b91c1c', '#047857', '#6d28d9', '#4338ca'];
+
+        function createCard(title, canvasId, width, height, filename) {
+            const grid = document.getElementById('assetGrid');
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <h3>${title}</h3>
+                <canvas id="${canvasId}" width="${width}" height="${height}"></canvas>
+                <button onclick="downloadAsset('${canvasId}', '${filename}')">Download PNG</button>
+            `;
+            grid.appendChild(card);
+        }
+
+        // --- 1. DRAW NARROW SIDE PANEL ---
+        function drawSidePanel(ctx, w, h) {
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = '#5a3818';
+            ctx.fillRect(8, 10, w - 16, h - 20);
+
+            ctx.strokeStyle = '#3d2410';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(8, 10, w - 16, h - 20);
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+            ctx.fillRect(8, 10, 10, h - 20);
+        }
+
+        // --- 2. DRAW 6x1 BOOKSHELF FACE (6 RACKS, SINGLE COLUMN) ---
+        function drawBookshelfFace6x1(ctx, w, h, variantSeed) {
+            ctx.clearRect(0, 0, w, h);
+
+            // Outer Wooden Cabinet Frame
+            ctx.fillStyle = '#4a2810';
+            ctx.fillRect(12, 8, w - 24, h - 16);
+            ctx.strokeStyle = '#2d1508';
+            ctx.lineWidth = 5;
+            ctx.strokeRect(12, 8, w - 24, h - 16);
+
+            let numRacks = 6;
+            let usableHeight = h - 24;
+            let rackHeight = usableHeight / numRacks;
+
+            for (let s = 0; s < numRacks; s++) {
+                let shelfY = 12 + (s + 1) * rackHeight;
+
+                // Draw Horizontal Wooden Shelf Plate (except below the bottom plate border, draw above shelf line)
+                if (s < numRacks - 1) {
+                    ctx.fillStyle = '#6d421a';
+                    ctx.fillRect(16, shelfY - 5, w - 32, 5);
+                    ctx.strokeStyle = '#3d2410';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(16, shelfY - 5, w - 32, 5);
+                }
+
+                let startY = 12 + s * rackHeight + 2;
+                let endY = shelfY - 5;
+
+                // Render single continuous column of books per shelf
+                renderShelfBooks(ctx, 20, w - 20, startY, endY, s, variantSeed);
+            }
+        }
+
+        function renderShelfBooks(ctx, xStart, xEnd, yStart, yEnd, shelfIdx, seed) {
+            // 4 to 7 books per single-column shelf row
+            let numBooks = 4 + ((shelfIdx * 2 + seed * 5) % 4); 
+            let compWidth = xEnd - xStart;
+            let bookWidth = compWidth / numBooks;
+
+            for (let b = 0; b < numBooks; b++) {
+                let colIdx = (b * 3 + shelfIdx * 7 + seed * 11) % bookColors.length;
+                let color = bookColors[colIdx];
+
+                let bLeft = xStart + b * bookWidth + 1.5;
+                let bTop = yStart + ((b + shelfIdx + seed) % 2 === 0 ? 2 : 5);
+                let bW = bookWidth - 2.5;
+                let bH = (yEnd - yStart) - ((b + shelfIdx + seed) % 2 === 0 ? 3 : 6);
+
+                // Book Spine Body
+                ctx.fillStyle = color;
+                ctx.fillRect(bLeft, bTop, bW, bH);
+
+                // Highlight spine edge
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(bLeft + 1.5, bTop + 2);
+                ctx.lineTo(bLeft + 1.5, bTop + bH - 2);
+                ctx.stroke();
+
+                // Book Outer Outline
+                ctx.strokeStyle = '#1a1005';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(bLeft, bTop, bW, bH);
+            }
+        }
+
+        // Initialize UI Cards & Canvas Elements
+        createCard('Side Panel', 'sideCanvas', 96, 256, 'wooden_bookshelf_side.png');
+        for (let i = 1; i <= 15; i++) {
+            createCard(`Bookshelf v${i}`, `faceCanvas${i}`, 256, 256, `wooden_bookshelf_face_${i}.png`);
+        }
+
+        // Render Side Panel
+        drawSidePanel(document.getElementById('sideCanvas').getContext('2d'), 96, 256);
+
+        // Render 15 Single-Column 6-Rack Bookshelf Variants
+        for (let i = 1; i <= 15; i++) {
+            const cvs = document.getElementById('faceCanvas' + i);
+            drawBookshelfFace6x1(cvs.getContext('2d'), 256, 256, i);
+        }
+
+        // Download Trigger
+        function downloadAsset(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>

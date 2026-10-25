@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Magic Staff Generator (Exact Right-Hand Lock)</title>
+    <style>
+        body { background: #0f172a; color: #fef3c7; font-family: 'Georgia', serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .grid { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 15px; }
+        .card { background: #1e293b; border: 2px solid #334155; border-radius: 12px; padding: 12px; text-align: center; width: 190px; }
+        canvas { background: transparent; border: 1px dashed #475569; border-radius: 8px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto; }
+        button { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fef3c7; border: 1px solid #fbbf24; padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>🪄 Magic Staff Asset Builder (Right-Hand Aligned)</h2>
+    <p style="color: #94a3b8; margin-top: 0;">Staff locked to right-hand canvas coordinates.</p>
+
+    <div class="grid">
+        <div class="card">
+            <h3>1. Magic Staff</h3>
+            <canvas id="c_staff" width="256" height="256"></canvas>
+            <button onclick="download('c_staff', 'magic_staff.png')">Download Staff</button>
+        </div>
+    </div>
+
+    <script>
+        function drawStaff(ctx, cx, cy, length = 150, orbRadius = 20, shadowBlur = 20) {
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            // Wooden Shaft
+            ctx.fillStyle = '#4a250c';
+            ctx.fillRect(-5, -length, 10, length);
+            ctx.fillStyle = '#2d1506';
+            ctx.fillRect(-5, -length, 4, length);
+
+            // Turquoise Grips
+            ctx.fillStyle = '#0d9488';
+            ctx.fillRect(-6, -length * 0.45, 12, 16);
+
+            // Collar Prongs
+            ctx.fillStyle = '#3b1a07';
+            ctx.beginPath();
+            ctx.moveTo(-12, -length);
+            ctx.lineTo(-18, -length - 18);
+            ctx.lineTo(-8, -length - 8);
+            ctx.lineTo(0, -length - 22);
+            ctx.lineTo(8, -length - 8);
+            ctx.lineTo(18, -length - 18);
+            ctx.lineTo(12, -length);
+            ctx.closePath();
+            ctx.fill();
+
+            // Glowing Cyan Orb
+            ctx.shadowColor = '#06b6d4';
+            ctx.shadowBlur = shadowBlur;
+            ctx.fillStyle = '#22d3ee';
+            ctx.beginPath();
+            ctx.arc(0, -length - 20, orbRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Highlight facet
+            ctx.fillStyle = '#cffafe';
+            ctx.beginPath();
+            ctx.arc(-orbRadius * 0.3, -length - 26, orbRadius * 0.35, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        let ctx = document.getElementById('c_staff').getContext('2d');
+        ctx.clearRect(0, 0, 256, 256);
+        // Shifted right to cx = 210 to match the exact right-hand offset of the player sprite
+        drawStaff(ctx, 210, 205, 145, 18, 20);
+
+        function download(id, filename) {
+            let link = document.createElement('a');
+            link.download = filename;
+            link.href = document.getElementById(id).toDataURL();
+            link.click();
+        }
+    </script>
+</body>
+</html>

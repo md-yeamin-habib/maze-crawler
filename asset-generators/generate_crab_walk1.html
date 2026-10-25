@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crab Walk Step Variations Generator - Front View V6</title>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 {
+            color: #ef4444;
+            margin-bottom: 5px;
+        }
+        p {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-top: 0;
+        }
+        .controls {
+            margin: 20px 0;
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 8px;
+            display: inline-block;
+            border: 1px solid #334155;
+        }
+        button {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: #fef3c7;
+            border: 1px solid #fca5a5;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            margin: 5px;
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+        button.active {
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.9);
+        }
+        .canvas-container {
+            background: #ffffff;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 10px;
+            display: inline-block;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            margin-top: 10px;
+        }
+        canvas {
+            display: block;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Crab Walk Step Variations Generator</h1>
+    <p>Front Leg Grounded + Rotated Middle Background Leg Lifted</p>
+
+    <div class="controls">
+        <button id="btnNormal" onclick="setMode('normal')" class="active">1. Normal Front Idle</button>
+        <button id="btnLeft" onclick="setMode('left_lift')">2. Left Middle Leg Lifted</button>
+        <button id="btnRight" onclick="setMode('right_lift')">3. Right Middle Leg Lifted</button>
+        <br><br>
+        <button onclick="downloadAsset()" style="background: linear-gradient(135deg, #059669, #10b981);">Download Step PNG</button>
+    </div>
+
+    <br>
+    <div class="canvas-container">
+        <canvas id="crabCanvas" width="500" height="480"></canvas>
+    </div>
+
+    <script>
+        let currentMode = 'normal'; // 'normal', 'left_lift', 'right_lift'
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('btnNormal').className = (mode === 'normal') ? 'active' : '';
+            document.getElementById('btnLeft').className = (mode === 'left_lift') ? 'active' : '';
+            document.getElementById('btnRight').className = (mode === 'right_lift') ? 'active' : '';
+            renderAsset();
+        }
+
+        function renderAsset() {
+            const canvas = document.getElementById('crabCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2 + 35);
+            
+            let scale = 2.0;
+            ctx.scale(scale, scale);
+
+            const colTopLight  = '#f87171';
+            const colPrimary   = '#dc2626';
+            const colShadow    = '#b91c1c';
+            const colDeepCore  = '#991b1b';
+            const colOutline   = '#450a0a';
+
+            function drawPolygon(points, fillColor) {
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+                for (let p = 1; p < points.length; p++) {
+                    ctx.lineTo(points[p].x, points[p].y);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = colOutline;
+                ctx.lineWidth = 1.1;
+                ctx.stroke();
+            }
+
+            // --- Background Legs (Middle leg lifted if active for that side) ---
+            for (let side = -1; side <= 1; side += 2) {
+                let dir = side;
+                let isMiddleLifted = (currentMode === 'left_lift' && dir === -1) || (currentMode === 'right_lift' && dir === 1);
+
+                for (let i = 0; i < 3; i++) {
+                    let bx = dir * (24 + i * 4);
+                    let by = 10 + (i * 5);
+
+                    if (isMiddleLifted && i === 1) {
+                        // Lifted middle background leg using the exact same structural style, rotated and raised
+                        ctx.save();
+                        ctx.translate(bx, by);
+                        ctx.rotate(dir * -0.65); // Rotated cleanly like the lifted front leg
+
+                        drawPolygon([
+                            {x: 0, y: 0}, {x: dir * 26, y: 12}, {x: dir * 22, y: 19}, {x: -dir * 3, y: 7}
+                        ], colDeepCore);
+                        drawPolygon([
+                            {x: dir * 26, y: 12}, {x: dir * 16, y: 34}, {x: dir * 11, y: 38}, {x: dir * 22, y: 19}
+                        ], colShadow);
+
+                        ctx.restore();
+                    } else {
+                        let mx = dir * (48 + i * 6);
+                        let my = 20 + (i * 5);
+                        let tx = dir * (38 + i * 6);
+                        let ty = 44 + (i * 4);
+
+                        drawPolygon([
+                            {x: bx, y: by}, {x: mx, y: my}, {x: tx, y: ty}, {x: bx + dir*3, y: by + 5}
+                        ], colDeepCore);
+                    }
+                }
+            }
+
+            // --- High-Polygon Carapace Mesh ---
+            drawPolygon([
+                {x: -30, y: -22}, {x: 30, y: -22}, {x: 30, y: 26}, {x: -30, y: 26}
+            ], colPrimary);
+
+            drawPolygon([{x: 0, y: -28}, {x: -22, y: -16}, {x: -24, y: 6}, {x: 0, y: 22}], colTopLight);
+            drawPolygon([{x: 0, y: -28}, {x: 22, y: -16}, {x: 24, y: 6}, {x: 0, y: 22}], colPrimary);
+
+            drawPolygon([{x: -22, y: -16}, {x: -28, y: -4}, {x: -26, y: 16}, {x: -24, y: 6}], colPrimary);
+            drawPolygon([{x: 22, y: -16}, {x: 28, y: -4}, {x: 26, y: 16}, {x: 24, y: 6}], colShadow);
+
+            drawPolygon([{x: -28, y: -4}, {x: -32, y: 8}, {x: -28, y: 24}, {x: -26, y: 16}], colShadow);
+            drawPolygon([{x: 28, y: -4}, {x: 32, y: 8}, {x: 28, y: 24}, {x: 26, y: 16}], colDeepCore);
+
+            drawPolygon([{x: -24, y: 16}, {x: 24, y: 16}, {x: 18, y: 26}, {x: -18, y: 26}], colShadow);
+
+            drawPolygon([
+                {x: 0, y: -28}, {x: -5, y: -8}, {x: 0, y: 26}, {x: 5, y: -8}
+            ], colTopLight);
+
+            // --- Foreground Legs (Front-most leg always firmly grounded) ---
+            for (let side = -1; side <= 1; side += 2) {
+                let dir = side;
+                let bx = dir * 26;
+                let by = 16;
+                let mx = dir * 52;
+                let my = 28;
+                let tx = dir * 42;
+                let ty = 50;
+
+                drawPolygon([
+                    {x: bx, y: by}, {x: mx, y: my}, {x: mx - dir*4, y: my + 7}, {x: bx - dir*3, y: by + 7}
+                ], colPrimary);
+                drawPolygon([
+                    {x: mx, y: my}, {x: tx, y: ty}, {x: tx - dir*5, y: ty + 4}, {x: mx - dir*4, y: my + 7}
+                ], colShadow);
+            }
+
+            // --- Eyes & Stalks ---
+            for (let side = -1; side <= 1; side += 2) {
+                let dir = side;
+                drawPolygon([
+                    {x: dir*6, y: -18}, {x: dir*12, y: -20}, {x: dir*11, y: -32}, {x: dir*5, y: -30}
+                ], colDeepCore);
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.arc(dir * 8.5, -35, 3.8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = colOutline;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(dir * 7.4, -36.2, 1.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // --- Claws (Frame 1 State: Left Open, Right Closed) ---
+            function drawHighPolyClaw(dir, isOpen) {
+                ctx.save();
+                ctx.translate(dir * 20, -14);
+
+                ctx.fillStyle = colDeepCore;
+                ctx.beginPath();
+                ctx.arc(0, 0, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = colOutline;
+                ctx.lineWidth = 1.1;
+                ctx.stroke();
+
+                drawPolygon([
+                    {x: 0, y: 0}, {x: dir * 14, y: -20}, {x: dir * 10, y: -28}, {x: -dir * 4, y: -10}
+                ], colPrimary);
+
+                drawPolygon([
+                    {x: dir * 14, y: -20}, {x: dir * 26, y: -38}, {x: dir * 18, y: -46}, {x: dir * 8, y: -28}
+                ], colShadow);
+
+                drawPolygon([
+                    {x: dir * 18, y: -46}, 
+                    {x: dir * 42, y: -64}, 
+                    {x: dir * 30, y: -80}, 
+                    {x: dir * 12, y: -58}
+                ], colPrimary);
+
+                drawPolygon([
+                    {x: dir * 30, y: -80}, 
+                    {x: dir * 42, y: -64}, 
+                    {x: dir * 36, y: -54}, 
+                    {x: dir * 22, y: -68}
+                ], colTopLight);
+
+                ctx.save();
+                ctx.translate(dir * 18, -46);
+                if (isOpen) {
+                    ctx.rotate(-dir * 0.55);
+                } else {
+                    ctx.rotate(-dir * 0.05);
+                }
+                ctx.translate(-dir * 18, 46);
+
+                drawPolygon([
+                    {x: dir * 18, y: -46}, 
+                    {x: dir * 32, y: -34}, 
+                    {x: dir * 40, y: -46}, 
+                    {x: dir * 28, y: -56}
+                ], colShadow);
+
+                ctx.restore();
+                ctx.restore();
+            }
+
+            drawHighPolyClaw(-1, true);  // Left open
+            drawHighPolyClaw(1, false); // Right closed
+
+            ctx.restore();
+        }
+
+        function downloadAsset() {
+            const canvas = document.getElementById('crabCanvas');
+            const link = document.createElement('a');
+            link.download = `crab_walk_front_middle_lift_v6_${currentMode}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        window.onload = renderAsset;
+    </script>
+
+</body>
+</html>

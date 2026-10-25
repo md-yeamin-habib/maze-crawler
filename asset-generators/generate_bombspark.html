@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Low-Poly Fuse Spark Generator</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background-color: #0b0f19;
+            color: #f1f5f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 24px;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh;
+        }
+        h1 { color: #fbbf24; margin-bottom: 6px; font-size: 24px; text-align: center; }
+        p.subtitle { color: #94a3b8; margin-top: 0; margin-bottom: 24px; font-size: 14px; text-align: center; }
+        .container {
+            display: flex; gap: 28px; justify-content: center; align-items: flex-start;
+            max-width: 800px; width: 100%;
+        }
+        .controls-card {
+            background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+            padding: 24px; display: flex; flex-direction: column; gap: 18px;
+            width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .control-group { display: flex; flex-direction: column; gap: 6px; }
+        .control-group label { font-size: 13px; font-weight: 600; color: #cbd5e1; display: flex; justify-content: space-between; }
+        input[type="range"] { width: 100%; accent-color: #f59e0b; cursor: pointer; }
+        .btn-main {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            color: #ffffff; border: 1px solid #f59e0b; padding: 12px;
+            font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer;
+            transition: all 0.2s ease; box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4); text-align: center;
+        }
+        .btn-main:hover { background: linear-gradient(135deg, #b45309, #78350f); transform: translateY(-1px); }
+        .preview-card {
+            background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+            padding: 20px; display: flex; flex-direction: column; align-items: center;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .canvas-container {
+            /* Checkerboard pattern to indicate transparency */
+            background-color: #111827;
+            background-image: 
+                linear-gradient(45deg, #1f2937 25%, transparent 25%), 
+                linear-gradient(-45deg, #1f2937 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #1f2937 75%), 
+                linear-gradient(-45deg, transparent 75%, #1f2937 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            border: 2px solid #475569; border-radius: 8px; padding: 12px; margin-bottom: 12px;
+        }
+        canvas { display: block; border-radius: 4px; width: 250px; height: 250px; }
+    </style>
+</head>
+<body>
+
+    <h1>✨ Low-Poly Fuse Spark Generator</h1>
+    <p class="subtitle">500px × 500px Transparent PNG Asset Overlay</p>
+
+    <div class="container">
+        <div class="controls-card">
+            <div class="control-group">
+                <label>Spark Size <span id="sizeVal">100%</span></label>
+                <input type="range" id="sparkSize" min="50" max="180" value="100" oninput="drawSpark()">
+            </div>
+
+            <div class="control-group">
+                <label>Spike Points <span id="pointsVal">12</span></label>
+                <input type="range" id="spikePoints" min="6" max="20" value="12" oninput="drawSpark()">
+            </div>
+
+            <div class="control-group">
+                <label>Outer Spike Length <span id="outerVal">120px</span></label>
+                <input type="range" id="outerRadius" min="60" max="200" value="120" oninput="drawSpark()">
+            </div>
+
+            <div class="control-group">
+                <label>Inner Spike Notch <span id="innerVal">45px</span></label>
+                <input type="range" id="innerRadius" min="20" max="90" value="45" oninput="drawSpark()">
+            </div>
+
+            <button class="btn-main" onclick="downloadSpark()">💾 Download Spark PNG (500x500)</button>
+        </div>
+
+        <div class="preview-card">
+            <div class="canvas-container">
+                <canvas id="sparkCanvas" width="500" height="500"></canvas>
+            </div>
+            <span style="font-size: 12px; color: #94a3b8;">Transparent Background</span>
+        </div>
+    </div>
+
+    <script>
+        function drawStar(ctx, cx, cy, points, outerR, innerR, fillColor, strokeColor = '#1e293b', strokeW = 3) {
+            ctx.beginPath();
+            for (let i = 0; i < points * 2; i++) {
+                const r = (i % 2 === 0) ? outerR : innerR;
+                const angle = (i / (points * 2)) * Math.PI * 2 - Math.PI / 2;
+                const x = cx + Math.cos(angle) * r;
+                const y = cy + Math.sin(angle) * r;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+            if (strokeColor) {
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = strokeW;
+                ctx.stroke();
+            }
+        }
+
+        function drawSpark() {
+            const scale = parseInt(document.getElementById('sparkSize').value) / 100;
+            const points = parseInt(document.getElementById('spikePoints').value);
+            const outerR = parseInt(document.getElementById('outerRadius').value) * scale;
+            const innerR = parseInt(document.getElementById('innerRadius').value) * scale;
+
+            document.getElementById('sizeVal').innerText = Math.round(scale * 100) + '%';
+            document.getElementById('pointsVal').innerText = points;
+            document.getElementById('outerVal').innerText = Math.round(outerR) + 'px';
+            document.getElementById('innerVal').innerText = Math.round(innerR) + 'px';
+
+            const canvas = document.getElementById('sparkCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 500, 500);
+
+            const cx = 250;
+            const cy = 250;
+
+            // 1. Outer Dark Outline / Red Base Layer
+            drawStar(ctx, cx, cy, points, outerR, innerR, '#ef4444', '#0f172a', 4);
+
+            // 2. Mid Orange Layer (Rotated slightly)
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(Math.PI / points / 2);
+            ctx.translate(-cx, -cy);
+            drawStar(ctx, cx, cy, points, outerR * 0.78, innerR * 0.75, '#f97316', null, 0);
+            ctx.restore();
+
+            // 3. Inner Bright Yellow Layer
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(Math.PI / points);
+            ctx.translate(-cx, -cy);
+            drawStar(ctx, cx, cy, points, outerR * 0.52, innerR * 0.5, '#facc15', null, 0);
+            ctx.restore();
+
+            // 4. Center Hot White Glow
+            ctx.beginPath();
+            ctx.arc(cx, cy, innerR * 0.45, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+            // 5. Surrounding Accents / Spikes
+            const accents = 8;
+            for (let a = 0; a < accents; a++) {
+                const angle = (a / accents) * Math.PI * 2;
+                const dist = outerR * 1.18;
+                const ax = cx + Math.cos(angle) * dist;
+                const ay = cy + Math.sin(angle) * dist;
+                const size = 10 * scale;
+
+                drawStar(ctx, ax, ay, 4, size, size * 0.3, (a % 2 === 0 ? '#facc15' : '#f97316'), '#0f172a', 1.5);
+            }
+        }
+
+        function downloadSpark() {
+            const canvas = document.getElementById('sparkCanvas');
+            const link = document.createElement('a');
+            link.download = 'fuse_spark.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        window.onload = drawSpark;
+    </script>
+</body>
+</html>

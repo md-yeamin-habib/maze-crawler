@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Side-POV Sketch-Match Snake Generator (5 Frames, 300x300)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0b0f19;
+      color: #f8fafc;
+    }
+    .pixelated {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .checkerboard {
+      background-image: linear-gradient(45deg, #1e293b 25%, transparent 25%), 
+                        linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #1e293b 75%), 
+                        linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+      background-color: #0f172a;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start p-4 sm:p-8">
+
+  <!-- Header -->
+  <header class="text-center mb-8 max-w-2xl">
+    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">Side-POV Sketch-Match Sequence</h1>
+    <p class="text-slate-400 text-sm">Preserves the exact side-profile snake design and replicates your 5-step sketch: Slither Right ➔ Head sweeps down/around ➔ Volumetric Coil Rest State ➔ Uncoils & Emerges ➔ Reverses to Slither Left.</p>
+  </header>
+
+  <!-- Main Content Grid -->
+  <div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+
+    <!-- Controls Panel -->
+    <div class="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col gap-5">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Animation Controls</h2>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-slate-300">Animation Speed (FPS)</label>
+        <input type="range" id="animSpeed" min="2" max="10" value="4" class="w-full accent-emerald-500">
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-slate-300">Total Frames</label>
+        <input type="text" value="5 Frames Sequence" readonly class="w-full bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-lg px-3 py-2 font-mono text-sm outline-none cursor-not-allowed">
+      </div>
+
+      <button onclick="downloadSpriteSheet()" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 mt-4">
+        Export Spritesheet PNG (5 Frames)
+      </button>
+    </div>
+
+    <!-- Preview Display Area -->
+    <div class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col gap-6">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-emerald-400">Live Sequence Preview</h2>
+        <span class="text-xs text-slate-400">5-Frame Sketch Match Cycle</span>
+      </div>
+
+      <!-- Live Loop Preview Box -->
+      <div class="flex flex-col items-center justify-center checkerboard p-8 rounded-xl border border-slate-800 shadow-inner gap-4">
+        <canvas id="previewCanvas" width="300" height="300" class="pixelated w-[200px] h-[200px] border border-slate-700/50 rounded-xl shadow-lg bg-transparent"></canvas>
+        <span class="text-xs font-mono text-slate-400" id="frameDesc">Frame 1: Slithering Right</span>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">All 5 Sequence Frames</h3>
+        <div id="framesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 justify-items-center">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const FRAME_SIZE = 300;
+    const TOTAL_FRAMES = 5; // Exactly matching your 5-step sketch
+    let currentFrame = 0;
+    let animInterval = null;
+
+    function initGenerator() {
+      renderAllFrames();
+      startAnimation();
+    }
+
+    function renderSnakeFrame(ctx, frameIdx) {
+      ctx.clearRect(0, 0, FRAME_SIZE, FRAME_SIZE);
+
+      const segments = 24;
+      let points = [];
+      let isCoiled = (frameIdx === 2); // Step 3: Full volumetric coil rest state
+      let isTurning = (frameIdx === 1); // Step 2: Head turning down/around
+      let isUncoiling = (frameIdx === 3); // Step 4: Uncoiling out to the left
+      let isReverse = (frameIdx === 4); // Step 5: Slithering left
+
+      if (isCoiled) {
+        // --- STEP 3: VOLUMETRIC COILED REST STATE ---
+        for (let i = 0; i <= segments; i++) {
+          let t = i / segments;
+          let angle = t * Math.PI * 5.5;
+          let rx = 30 + Math.sin(t * Math.PI * 2) * 8;
+          let ry = 18;
+          let x = 150 + Math.cos(angle) * rx;
+          let y = 160 + Math.sin(angle) * ry - (t * 8);
+          points.push({ x, y, t, isCoilRing: true });
+        }
+      } else {
+        // --- STEPS 1, 2, 4, 5: SLITHERING & TURNING PATHS ---
+        let phase = (frameIdx * 0.7);
+        for (let i = 0; i <= segments; i++) {
+          let t = i / segments;
+          let x, y;
+
+          if (isReverse) {
+            // Step 5: Slithering leftward (facing left)
+            x = 255 - (t * 210);
+            let wave = Math.sin(phase - (t * Math.PI * 3)) * 18;
+            y = 175 + wave;
+          } else if (isUncoiling) {
+            // Step 4: Uncoiling loop emerging and straightening leftward
+            x = 150 + Math.sin(t * Math.PI * 2.5) * 50;
+            y = 165 + Math.cos(t * Math.PI * 2) * 30;
+          } else if (isTurning) {
+            // Step 2: Head dipping down and curling under
+            x = 45 + (t * 190);
+            let dip = t > 0.65 ? (t - 0.65) * 65 : 0;
+            let wave = Math.sin(phase + (t * Math.PI * 3)) * 18;
+            y = 175 + wave + dip;
+          } else {
+            // Step 1: Normal rightward slither
+            x = 45 + (t * 210);
+            let wave = Math.sin(phase + (t * Math.PI * 3)) * 18;
+            y = 175 + wave;
+          }
+          points.push({ x, y, t, isCoilRing: false });
+        }
+      }
+
+      // Draw faceted low-poly body plates (identical design from previous program)
+      for (let i = 0; i < points.length - 1; i++) {
+        let p1 = points[i];
+        let p2 = points[i + 1];
+
+        let thickness = p1.isCoilRing ? 18 : 20;
+        if (!p1.isCoilRing) {
+          if (p1.t < 0.12) thickness = 6 + (p1.t * 115);
+          else if (p1.t > 0.88) thickness = 22;
+        }
+
+        let dx = p2.x - p1.x;
+        let dy = p2.y - p1.y;
+        let len = Math.hypot(dx, dy) || 1;
+        let nx = -dy / len * thickness;
+        let ny = dx / len * thickness;
+
+        ctx.strokeStyle = '#071f10';
+        ctx.lineWidth = 3;
+
+        // Lower belly plate
+        ctx.fillStyle = (i % 2 === 0) ? '#0f3d1e' : '#144c26';
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineTo(p2.x + nx * 0.8, p2.y + ny * 0.8);
+        ctx.lineTo(p1.x + nx * 0.8, p1.y + ny * 0.8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Upper back armor plate
+        ctx.fillStyle = (i % 2 === 0) ? '#1b6b35' : '#228643';
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineTo(p2.x - nx, p2.y - ny);
+        ctx.lineTo(p1.x - nx, p1.y - ny);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      // Head placement & side profile orientation matching exact design
+      let head = points[points.length - 1];
+      let neck = points[points.length - 2];
+      let angle = Math.atan2(head.y - neck.y, head.x - neck.x);
+
+      ctx.save();
+      ctx.translate(head.x, head.y);
+      if (isReverse) {
+        ctx.rotate(Math.PI); // Facing left for step 5
+      } else {
+        ctx.rotate(angle);
+      }
+
+      // Complete low-poly snake head
+      ctx.fillStyle = '#228643';
+      ctx.strokeStyle = '#071f10';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(32, 0);
+      ctx.lineTo(10, -16);
+      ctx.lineTo(-8, -14);
+      ctx.lineTo(-12, 12);
+      ctx.lineTo(14, 14);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Jaw mouth line separator
+      ctx.strokeStyle = '#0f3d1e';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(28, 4);
+      ctx.lineTo(4, 10);
+      ctx.stroke();
+
+      // Glossy reptile eye
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(14, -6, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(16, -9, 2.5, 2.5);
+
+      // Forked red tongue flicking on active moving frames
+      if (!isCoiled && (frameIdx === 0 || frameIdx === 4)) {
+        ctx.strokeStyle = '#dc2626';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(32, 6);
+        ctx.lineTo(52, 2);
+        ctx.moveTo(52, 2);
+        ctx.lineTo(64, -4);
+        ctx.moveTo(52, 2);
+        ctx.lineTo(65, 8);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function renderAllFrames() {
+      const container = document.getElementById('framesGrid');
+      container.innerHTML = '';
+
+      const stepNames = [
+        '1. Slither Right',
+        '2. Turn Head Down',
+        '3. Volumetric Coil',
+        '4. Uncoil & Reverse',
+        '5. Slither Left'
+      ];
+
+      for (let i = 0; i < TOTAL_FRAMES; i++) {
+        const canvas = document.createElement('canvas');
+        canvas.width = FRAME_SIZE;
+        canvas.height = FRAME_SIZE;
+        canvas.className = 'pixelated w-[80px] h-[80px] border border-slate-700/60 rounded-xl bg-slate-950 shadow-md';
+        
+        renderSnakeFrame(canvas.getContext('2d'), i);
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex flex-col items-center gap-1';
+        
+        const label = document.createElement('span');
+        label.className = 'text-[10px] font-mono text-slate-400 text-center';
+        label.innerText = stepNames[i];
+
+        wrapper.appendChild(canvas);
+        wrapper.appendChild(label);
+        container.appendChild(wrapper);
+      }
+    }
+
+    function startAnimation() {
+      if (animInterval) clearInterval(animInterval);
+      const fps = parseInt(document.getElementById('animSpeed').value) || 4;
+      const pCtx = document.getElementById('previewCanvas').getContext('2d');
+      const descEl = document.getElementById('frameDesc');
+
+      const stepNames = [
+        'Step 1: Slithering Right',
+        'Step 2: Head Turning Down/Right',
+        'Step 3: Volumetric Coiled Rest State',
+        'Step 4: Uncoiling & Emerging',
+        'Step 5: Slithering Left (Back State)'
+      ];
+
+      animInterval = setInterval(() => {
+        pCtx.clearRect(0, 0, FRAME_SIZE, FRAME_SIZE);
+        renderSnakeFrame(pCtx, currentFrame);
+        descEl.innerText = `Frame ${currentFrame + 1}: ${stepNames[currentFrame]}`;
+        currentFrame = (currentFrame + 1) % TOTAL_FRAMES;
+      }, 1000 / fps);
+    }
+
+    document.getElementById('animSpeed').oninput = startAnimation;
+
+    function downloadSpriteSheet() {
+      const sheetCanvas = document.createElement('canvas');
+      sheetCanvas.width = FRAME_SIZE * TOTAL_FRAMES;
+      sheetCanvas.height = FRAME_SIZE;
+      const sCtx = sheetCanvas.getContext('2d');
+
+      for (let i = 0; i < TOTAL_FRAMES; i++) {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = FRAME_SIZE;
+        tempCanvas.height = FRAME_SIZE;
+        renderSnakeFrame(tempCanvas.getContext('2d'), i);
+        sCtx.drawImage(tempCanvas, i * FRAME_SIZE, 0);
+      }
+
+      const link = document.createElement('a');
+      link.download = 'snake_sketch_sequence_spritesheet.png';
+      link.href = sheetCanvas.toDataURL('image/png');
+      link.click();
+    }
+
+    window.onload = initGenerator;
+  </script>
+</body>
+</html>

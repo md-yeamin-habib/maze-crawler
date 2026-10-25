@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cave Bat Mob - Sleeping / Idle State Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0b0f19;
+      color: #f8fafc;
+    }
+    .pixelated {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .checkerboard {
+      background-image: linear-gradient(45deg, #1e293b 25%, transparent 25%), 
+                        linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #1e293b 75%), 
+                        linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+      background-color: #0f172a;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start p-4 sm:p-8">
+
+  <!-- Header -->
+  <header class="text-center mb-8 max-w-2xl">
+    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">🦇 Low-Poly Cave Bat (Sleeping / Idle)</h1>
+    <p class="text-slate-400 text-sm">Front View — Hanging Upside Down, Wings Folded, Eyes & Mouth Closed</p>
+  </header>
+
+  <!-- Main Grid -->
+  <div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+
+    <!-- Controls Panel -->
+    <div class="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col gap-5">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-purple-400">Idle Settings</h2>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-slate-300">Breathing Animation Speed</label>
+        <input type="range" id="animSpeed" min="2" max="10" value="4" class="w-full accent-purple-500">
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-slate-300">Frame Size</label>
+        <input type="text" value="300 x 300 px" readonly class="w-full bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-lg px-3 py-2 font-mono text-sm outline-none cursor-not-allowed">
+      </div>
+
+      <button onclick="downloadSingleFrame()" class="w-full py-3 px-4 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-600/30 transition-all flex items-center justify-center gap-2 mt-4">
+        💾 Export Sleeping Bat PNG (300x300)
+      </button>
+
+      <button onclick="downloadBreathingSpritesheet()" class="w-full py-2 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-2">
+        📦 Export 4-Frame Idle Loop PNG
+      </button>
+    </div>
+
+    <!-- Preview Display Area -->
+    <div class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col gap-6">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-purple-400">Sleeping Idle Preview</h2>
+        <span class="text-xs text-slate-400">Subtle Gentle Breathing Motion</span>
+      </div>
+
+      <!-- Live Preview Canvas -->
+      <div class="flex flex-col items-center justify-center checkerboard p-8 rounded-xl border border-slate-800 shadow-inner gap-4">
+        <canvas id="previewCanvas" width="300" height="300" class="pixelated w-[220px] h-[220px] border border-slate-700/50 rounded-xl shadow-lg bg-transparent"></canvas>
+        <span class="text-xs font-mono text-slate-400">Upside Down Hanging Pose</span>
+      </div>
+
+      <!-- Individual Frames Grid -->
+      <div class="flex flex-col gap-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Idle Cycle Frames</h3>
+        <div id="framesGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 justify-items-center">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const FRAME_SIZE = 300;
+    const TOTAL_FRAMES = 4;
+    let currentFrame = 0;
+    let animInterval = null;
+
+    function drawSleepingBat(ctx, frameIdx = 0) {
+      ctx.clearRect(0, 0, FRAME_SIZE, FRAME_SIZE);
+
+      const cx = 150;
+      // Gentle subtle breathing motion (expanding/contracting vertically)
+      const breathScale = 1 + Math.sin((frameIdx / TOTAL_FRAMES) * Math.PI * 2) * 0.025;
+      const cy = 120; // Anchored high near top roost ceiling
+
+      ctx.save();
+
+      // Palette matching active bat assets
+      const bodyDark = '#141221';
+      const bodyMid = '#1e1b2e';
+      const bodyLight = '#2e2a4a';
+      const wingMembrane = '#1a1829';
+      const wingMembraneOuter = '#12101e';
+      const wingBone = '#0f0e1a';
+      const clawColor = '#334155';
+      const outline = '#050409';
+
+      function drawPoly(pts, fill, stroke = outline, lineW = 2.5) {
+        ctx.beginPath();
+        ctx.moveTo(pts[0][0], pts[0][1]);
+        for (let i = 1; i < pts.length; i++) {
+          ctx.lineTo(pts[i][0], pts[i][1]);
+        }
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+        if (stroke) {
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = lineW;
+          ctx.stroke();
+        }
+      }
+
+      // --- 1. ROOST CEILING CLAWS / FEET (AT TOP) ---
+      const footY = 45;
+      // Left Foot Claws
+      drawPoly([[cx - 16, footY], [cx - 12, footY - 12], [cx - 8, footY]], clawColor);
+      drawPoly([[cx - 10, footY], [cx - 6, footY - 10], [cx - 2, footY]], clawColor);
+      // Right Foot Claws
+      drawPoly([[cx + 2, footY], [cx + 6, footY - 10], [cx + 10, footY]], clawColor);
+      drawPoly([[cx + 8, footY], [cx + 12, footY - 12], [cx + 16, footY]], clawColor);
+
+      // Tail & Ankle Anchor Point (Inverted Position)
+      drawPoly([[cx - 12, footY], [cx, footY + 16], [cx + 12, footY]], bodyDark);
+
+
+      // --- 2. INVERTED HEAD & EARS (POINTING DOWNWARD) ---
+      const headY = cy + 100 * breathScale;
+
+      // Ears Pointing Downwards
+      // Left Ear
+      drawPoly([[cx - 14, headY - 8], [cx - 26, headY + 28], [cx - 4, headY]], bodyMid);
+      drawPoly([[cx - 12, headY - 6], [cx - 22, headY + 22], [cx - 6, headY]], bodyDark);
+      // Right Ear
+      drawPoly([[cx + 4, headY], [cx + 26, headY + 28], [cx + 14, headY - 8]], bodyLight);
+      drawPoly([[cx + 6, headY], [cx + 22, headY + 22], [cx + 12, headY - 6]], bodyMid);
+
+      // Inverted Head Base
+      drawPoly([[cx - 18, headY - 24], [cx, headY - 32], [cx + 18, headY - 24], [cx, headY + 8]], bodyMid);
+
+
+      // --- 3. FOLDED WINGS (WRAPPED COCOON-LIKE AROUND BODY) ---
+      // Left Wing Folded Front Panel
+      const lElbowX = cx - 42;
+      const lElbowY = cy + 25;
+      const lWristX = cx - 2;
+      const lWristY = headY - 12;
+
+      // Right Wing Folded Front Panel
+      const rElbowX = cx + 42;
+      const rElbowY = cy + 25;
+      const rWristX = cx + 2;
+      const rWristY = headY - 12;
+
+      // Outer Wing Membranes (Behind wrapped front)
+      drawPoly([[cx - 8, footY + 12], [lElbowX - 12, lElbowY], [cx - 28, headY - 30]], wingMembraneOuter);
+      drawPoly([[cx + 8, footY + 12], [rElbowX + 12, rElbowY], [cx + 28, headY - 30]], wingMembraneOuter);
+
+      // Main Wrapped Wing Facets (Meeting along center line)
+      // Left Folded Wing
+      drawPoly([[cx - 8, footY + 12], [lElbowX, lElbowY], [lWristX, lWristY], [cx, cy + 30]], wingMembrane);
+      drawPoly([[cx - 8, footY + 12], [cx, cy + 30], [lWristX, lWristY]], wingMembraneOuter);
+
+      // Right Folded Wing (Overlapping slightly)
+      drawPoly([[cx + 8, footY + 12], [rElbowX, rElbowY], [rWristX, rWristY], [cx, cy + 30]], bodyMid);
+      drawPoly([[cx + 8, footY + 12], [cx, cy + 30], [rWristX, rWristY]], bodyDark);
+
+      // Wing Bone Struts outlining the folded cocoon
+      drawPoly([[cx - 8, footY + 12], [lElbowX, lElbowY], [lWristX, lWristY]], wingBone, outline, 3);
+      drawPoly([[cx + 8, footY + 12], [rElbowX, rElbowY], [rWristX, rWristY]], wingBone, outline, 3);
+
+
+      // --- 4. SLEEPING FACE (EYES & MOUTH CLOSED) ---
+      // Snout
+      drawPoly([[cx - 5, headY - 10], [cx, headY - 4], [cx + 5, headY - 10]], bodyDark);
+
+      // Closed Sleeping Eyes (Slanted Curved Lines / V-Slits)
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+
+      // Left Closed Eye
+      ctx.beginPath();
+      ctx.moveTo(cx - 12, headY - 14);
+      ctx.lineTo(cx - 7, headY - 11);
+      ctx.lineTo(cx - 3, headY - 14);
+      ctx.stroke();
+
+      // Right Closed Eye
+      ctx.beginPath();
+      ctx.moveTo(cx + 3, headY - 14);
+      ctx.lineTo(cx + 7, headY - 11);
+      ctx.lineTo(cx + 12, headY - 14);
+      ctx.stroke();
+
+      // Closed Mouth (Simple horizontal line, no visible fangs/open mouth)
+      ctx.strokeStyle = outline;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - 4, headY - 2);
+      ctx.lineTo(cx + 4, headY - 2);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function renderAllFrames() {
+      const container = document.getElementById('framesGrid');
+      container.innerHTML = '';
+
+      for (let i = 0; i < TOTAL_FRAMES; i++) {
+        const canvas = document.createElement('canvas');
+        canvas.width = FRAME_SIZE;
+        canvas.height = FRAME_SIZE;
+        canvas.className = 'pixelated w-[100px] h-[100px] border border-slate-700/60 rounded-xl bg-slate-950 shadow-md';
+        
+        drawSleepingBat(canvas.getContext('2d'), i);
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex flex-col items-center gap-1';
+        
+        const label = document.createElement('span');
+        label.className = 'text-[10px] font-mono text-slate-400';
+        label.innerText = `Frame ${i + 1}`;
+
+        wrapper.appendChild(canvas);
+        wrapper.appendChild(label);
+        container.appendChild(wrapper);
+      }
+    }
+
+    function startAnimation() {
+      if (animInterval) clearInterval(animInterval);
+      const fps = parseInt(document.getElementById('animSpeed').value) || 4;
+      const pCtx = document.getElementById('previewCanvas').getContext('2d');
+
+      animInterval = setInterval(() => {
+        pCtx.clearRect(0, 0, FRAME_SIZE, FRAME_SIZE);
+        drawSleepingBat(pCtx, currentFrame);
+        currentFrame = (currentFrame + 1) % TOTAL_FRAMES;
+      }, 1000 / fps);
+    }
+
+    document.getElementById('animSpeed').oninput = startAnimation;
+
+    function downloadSingleFrame() {
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = FRAME_SIZE;
+      tempCanvas.height = FRAME_SIZE;
+      drawSleepingBat(tempCanvas.getContext('2d'), 0);
+
+      const link = document.createElement('a');
+      link.download = 'bat_sleeping_idle.png';
+      link.href = tempCanvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function downloadBreathingSpritesheet() {
+      const sheetCanvas = document.createElement('canvas');
+      sheetCanvas.width = FRAME_SIZE * TOTAL_FRAMES;
+      sheetCanvas.height = FRAME_SIZE;
+      const sCtx = sheetCanvas.getContext('2d');
+
+      for (let i = 0; i < TOTAL_FRAMES; i++) {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = FRAME_SIZE;
+        tempCanvas.height = FRAME_SIZE;
+        drawSleepingBat(tempCanvas.getContext('2d'), i);
+        sCtx.drawImage(tempCanvas, i * FRAME_SIZE, 0);
+      }
+
+      const link = document.createElement('a');
+      link.download = 'bat_sleeping_breathing_spritesheet.png';
+      link.href = sheetCanvas.toDataURL('image/png');
+      link.click();
+    }
+
+    window.onload = () => {
+      renderAllFrames();
+      startAnimation();
+    };
+  </script>
+</body>
+</html>

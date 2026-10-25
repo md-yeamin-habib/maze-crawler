@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>60x180 Low-Poly Wall Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #080c14;
+            color: #f1f5f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        canvas.texture-preview {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            border: 2px solid #1e293b;
+            border-radius: 6px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
+            background-color: #030712;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        canvas.texture-preview:hover {
+            transform: translateY(-3px);
+            border-color: #38bdf8;
+        }
+        .custom-glass {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .dark-glass {
+            background: rgba(8, 12, 22, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-4 md:p-8">
+
+    <!-- Header Section -->
+    <header class="text-center max-w-2xl mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700/60 text-sky-400 text-xs font-semibold mb-3">
+            <span>📐 Native Resolution: 60 × 180</span>
+            <span>•</span>
+            <span>Low-Poly Stone Mesh</span>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-2">
+            Low-Poly Wall Texture Generator
+        </h1>
+        <p class="text-slate-400 text-sm md:text-base">
+            Procedural regular stone walls matching your low-poly reference mesh, plus an ultra-dark, flat-faceted variant for outer boundary walls.
+        </p>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="w-full max-w-6xl flex flex-col items-center gap-8">
+        
+        <!-- Controls Bar -->
+        <div class="custom-glass p-4 rounded-xl w-full max-w-4xl flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <button id="btnRegenerate" onclick="regenerateAll()" class="px-4 py-2.5 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white text-xs md:text-sm font-semibold rounded-lg shadow-lg hover:shadow-sky-500/20 transition-all flex items-center gap-2 active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Re-Roll Seeds
+                </button>
+                <span class="text-xs text-slate-400 hidden sm:inline">Generates 4 regular walls + 1 outer boundary wall</span>
+            </div>
+
+            <button id="btnDownloadAll" onclick="downloadAll()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs md:text-sm font-semibold rounded-lg shadow-lg hover:shadow-emerald-500/20 transition-all flex items-center gap-2 active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Download All (5 PNGs)
+            </button>
+        </div>
+
+        <!-- Texture Cards Display Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 w-full max-w-6xl">
+            
+            <!-- Regular Wall Variant 1 -->
+            <div class="custom-glass p-4 rounded-xl flex flex-col items-center text-center gap-3 hover:border-slate-600 transition-colors">
+                <div>
+                    <h3 class="font-bold text-slate-200 text-xs sm:text-sm">stone_wall_v1.png</h3>
+                    <p class="text-[11px] text-slate-400">Regular Wall (Variant 1)</p>
+                </div>
+                
+                <canvas id="canvas_v1" width="120" height="360" class="texture-preview w-[120px] h-[360px]"></canvas>
+                
+                <button onclick="downloadVariant('canvas_v1', 'stone_wall_v1.png')" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-600/50 text-slate-200 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 hover:text-white">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download 60x180
+                </button>
+            </div>
+
+            <!-- Regular Wall Variant 2 -->
+            <div class="custom-glass p-4 rounded-xl flex flex-col items-center text-center gap-3 hover:border-slate-600 transition-colors">
+                <div>
+                    <h3 class="font-bold text-slate-200 text-xs sm:text-sm">stone_wall_v2.png</h3>
+                    <p class="text-[11px] text-slate-400">Regular Wall (Variant 2)</p>
+                </div>
+                
+                <canvas id="canvas_v2" width="120" height="360" class="texture-preview w-[120px] h-[360px]"></canvas>
+                
+                <button onclick="downloadVariant('canvas_v2', 'stone_wall_v2.png')" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-600/50 text-slate-200 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 hover:text-white">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download 60x180
+                </button>
+            </div>
+
+            <!-- Regular Wall Variant 3 -->
+            <div class="custom-glass p-4 rounded-xl flex flex-col items-center text-center gap-3 hover:border-slate-600 transition-colors">
+                <div>
+                    <h3 class="font-bold text-slate-200 text-xs sm:text-sm">stone_wall_v3.png</h3>
+                    <p class="text-[11px] text-slate-400">Regular Wall (Variant 3)</p>
+                </div>
+                
+                <canvas id="canvas_v3" width="120" height="360" class="texture-preview w-[120px] h-[360px]"></canvas>
+                
+                <button onclick="downloadVariant('canvas_v3', 'stone_wall_v3.png')" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-600/50 text-slate-200 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 hover:text-white">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download 60x180
+                </button>
+            </div>
+
+            <!-- Regular Wall Variant 4 -->
+            <div class="custom-glass p-4 rounded-xl flex flex-col items-center text-center gap-3 hover:border-slate-600 transition-colors">
+                <div>
+                    <h3 class="font-bold text-slate-200 text-xs sm:text-sm">stone_wall_v4.png</h3>
+                    <p class="text-[11px] text-slate-400">Regular Wall (Variant 4)</p>
+                </div>
+                
+                <canvas id="canvas_v4" width="120" height="360" class="texture-preview w-[120px] h-[360px]"></canvas>
+                
+                <button onclick="downloadVariant('canvas_v4', 'stone_wall_v4.png')" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-600/50 text-slate-200 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 hover:text-white">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download 60x180
+                </button>
+            </div>
+
+            <!-- Dark Flat Outer Wall -->
+            <div class="dark-glass p-4 rounded-xl flex flex-col items-center text-center gap-3 hover:border-sky-500/50 transition-colors">
+                <div>
+                    <h3 class="font-bold text-sky-300 text-xs sm:text-sm">stone_outer_wall.png</h3>
+                    <p class="text-[11px] text-slate-400">Outer Boundary Wall</p>
+                </div>
+                
+                <canvas id="canvas_outer" width="120" height="360" class="texture-preview w-[120px] h-[360px]"></canvas>
+                
+                <button onclick="downloadVariant('canvas_outer', 'stone_outer_wall.png')" class="w-full py-2 px-3 bg-sky-950 hover:bg-sky-900 border border-sky-700/60 text-sky-200 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 hover:text-white">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download Outer 60x180
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="mt-12 text-center text-xs text-slate-500">
+        Low-Poly Procedural Mesh Asset Generator • Output Format: 60px × 180px PNG
+    </footer>
+
+    <!-- Generator Script -->
+    <script>
+        // Seeded Pseudo-Random Generator
+        function seededRandom(seed) {
+            let x = Math.sin(seed) * 10000;
+            return x - Math.floor(x);
+        }
+
+        /**
+         * Renders the low-poly triangulated stone wall mesh.
+         * Exact Native Canvas Dimensions: 60x180
+         */
+        function renderMeshWall(displayCanvas, seed, isOuterWall = false) {
+            const TARGET_W = 60;
+            const TARGET_H = 180;
+            
+            // Offscreen canvas at exact 60x180 resolution
+            const offscreen = document.createElement('canvas');
+            offscreen.width = TARGET_W;
+            offscreen.height = TARGET_H;
+            const ctx = offscreen.getContext('2d');
+
+            let currentSeed = seed;
+            function rand() {
+                currentSeed += 0.173;
+                return seededRandom(currentSeed);
+            }
+
+            // Fill base background color
+            const baseBg = isOuterWall ? '#03060d' : '#0b111e';
+            ctx.fillStyle = baseBg;
+            ctx.fillRect(0, 0, TARGET_W, TARGET_H);
+
+            // Mesh settings tuned to replicate image_0598a0.png
+            const rows = isOuterWall ? 20 : 34; // Horizontal stratus rows
+            const cols = isOuterWall ? 5 : 8;   // Triangular columns across width
+            const cellW = TARGET_W / cols;
+            const cellH = TARGET_H / rows;
+
+            // Generate wavy horizontal grid vertices
+            let vertices = [];
+
+            // Global sine wave displacement for horizontal flowing strata
+            const waveFreq = 0.18 + rand() * 0.05;
+            const waveAmp = isOuterWall ? 1.5 : 2.8;
+
+            for (let r = 0; r <= rows; r++) {
+                vertices[r] = [];
+                // Horizontal wavy offset along Y-axis
+                let waveY = Math.sin(r * waveFreq + seed) * waveAmp;
+
+                for (let c = 0; c <= cols; c++) {
+                    // Jittering for organic low-poly facet look
+                    let jitterX = (c === 0 || c === cols) ? 0 : (rand() - 0.5) * cellW * (isOuterWall ? 0.3 : 0.55);
+                    let jitterY = (r === 0 || r === rows) ? 0 : (rand() - 0.5) * cellH * (isOuterWall ? 0.25 : 0.45);
+
+                    let px = c * cellW + jitterX;
+                    let py = r * cellH + waveY + jitterY;
+
+                    // Depth offset Z for normal lighting calculations
+                    let zScale = isOuterWall ? 1.2 : 3.2;
+                    let pz = (rand() - 0.5) * zScale;
+
+                    vertices[r][c] = { x: px, y: py, z: pz };
+                }
+            }
+
+            // Render Low-Poly Triangles
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    let p00 = vertices[r][c];
+                    let p10 = vertices[r + 1][c];
+                    let p01 = vertices[r][c + 1];
+                    let p11 = vertices[r + 1][c + 1];
+
+                    // Alternate triangle diagonal directions across adjacent cells
+                    if ((r + c) % 2 === 0) {
+                        drawTriangleFacet(ctx, p00, p10, p01, isOuterWall, rand);
+                        drawTriangleFacet(ctx, p10, p11, p01, isOuterWall, rand);
+                    } else {
+                        drawTriangleFacet(ctx, p00, p10, p11, isOuterWall, rand);
+                        drawTriangleFacet(ctx, p00, p11, p01, isOuterWall, rand);
+                    }
+                }
+            }
+
+            // Draw crisp subtle horizontal seam lines along row boundaries
+            ctx.lineWidth = 0.3;
+            for (let r = 1; r < rows; r++) {
+                ctx.strokeStyle = isOuterWall 
+                    ? `rgba(2, 4, 8, ${0.35 + rand() * 0.2})` 
+                    : `rgba(6, 10, 18, ${0.5 + rand() * 0.3})`;
+                ctx.beginPath();
+                for (let c = 0; c <= cols; c++) {
+                    let pt = vertices[r][c];
+                    if (c === 0) ctx.moveTo(pt.x, pt.y);
+                    else ctx.lineTo(pt.x, pt.y);
+                }
+                ctx.stroke();
+            }
+
+            // Top and bottom ambient vignette for smooth tiling
+            let grad = ctx.createLinearGradient(0, 0, 0, TARGET_H);
+            if (isOuterWall) {
+                grad.addColorStop(0.0, 'rgba(3, 6, 12, 0.4)');
+                grad.addColorStop(0.15, 'rgba(0, 0, 0, 0)');
+                grad.addColorStop(0.85, 'rgba(0, 0, 0, 0)');
+                grad.addColorStop(1.0, 'rgba(3, 6, 12, 0.5)');
+            } else {
+                grad.addColorStop(0.0, 'rgba(5, 9, 16, 0.35)');
+                grad.addColorStop(0.1, 'rgba(0, 0, 0, 0)');
+                grad.addColorStop(0.9, 'rgba(0, 0, 0, 0)');
+                grad.addColorStop(1.0, 'rgba(5, 9, 16, 0.45)');
+            }
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, TARGET_W, TARGET_H);
+
+            // Upscale to preview canvas (120x360) with crisp pixelated rendering
+            const displayCtx = displayCanvas.getContext('2d');
+            displayCtx.imageSmoothingEnabled = false;
+            displayCtx.clearRect(0, 0, displayCanvas.width, displayCanvas.height);
+            displayCtx.drawImage(offscreen, 0, 0, TARGET_W, TARGET_H, 0, 0, displayCanvas.width, displayCanvas.height);
+
+            // Store native 60x180 offscreen canvas for PNG downloading
+            displayCanvas._nativeCanvas = offscreen;
+        }
+
+        /**
+         * Calculates lighting facet shades matching dark low-poly slate palette
+         */
+        function drawTriangleFacet(ctx, p1, p2, p3, isOuterWall, randFunc) {
+            // Normal calculation via Cross Product
+            let ux = p2.x - p1.x;
+            let uy = p2.y - p1.y;
+            let uz = p2.z - p1.z;
+
+            let vx = p3.x - p1.x;
+            let vy = p3.y - p1.y;
+            let vz = p3.z - p1.z;
+
+            let nx = uy * vz - uz * vy;
+            let ny = uz * vx - ux * vz;
+            let nz = ux * vy - uy * vx;
+
+            let len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+            nx /= len;
+            ny /= len;
+            nz /= len;
+
+            // Soft Directional Light from top-left front
+            let lx = -0.3, ly = -0.5, lz = 0.81;
+            let dot = Math.max(0.0, nx * lx + ny * ly + nz * lz);
+
+            let r, g, b;
+
+            if (isOuterWall) {
+                // Outer Wall: Darker, flatter, low-contrast dark midnight/black palette
+                let baseIntensity = 12 + dot * 16 + randFunc() * 6;
+                r = Math.floor(baseIntensity * 0.7);
+                g = Math.floor(baseIntensity * 0.95);
+                b = Math.floor(baseIntensity * 1.35);
+            } else {
+                // Regular Inner Wall: Slate blue-gray palette matching reference image
+                let baseIntensity = 20 + dot * 32 + randFunc() * 10;
+                r = Math.floor(baseIntensity * 0.8);
+                g = Math.floor(baseIntensity * 1.0);
+                b = Math.floor(baseIntensity * 1.4);
+            }
+
+            // Clamp colors
+            r = Math.min(255, Math.max(0, r));
+            g = Math.min(255, Math.max(0, g));
+            b = Math.min(255, Math.max(0, b));
+
+            let colorStr = `rgb(${r}, ${g}, ${b})`;
+
+            ctx.fillStyle = colorStr;
+            ctx.strokeStyle = colorStr;
+            ctx.lineWidth = 0.3;
+
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.lineTo(p3.x, p3.y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        // Seeds State
+        let seeds = [105.2, 230.8, 377.4, 512.1, 888.5];
+
+        function renderAll() {
+            renderMeshWall(document.getElementById('canvas_v1'), seeds[0], false);
+            renderMeshWall(document.getElementById('canvas_v2'), seeds[1], false);
+            renderMeshWall(document.getElementById('canvas_v3'), seeds[2], false);
+            renderMeshWall(document.getElementById('canvas_v4'), seeds[3], false);
+            renderMeshWall(document.getElementById('canvas_outer'), seeds[4], true);
+        }
+
+        function regenerateAll() {
+            seeds = seeds.map(s => s + Math.random() * 150 + 40);
+            renderAll();
+        }
+
+        /**
+         * Downloads individual texture as exact 60x180 PNG
+         */
+        function downloadVariant(canvasId, filename) {
+            const displayCanvas = document.getElementById(canvasId);
+            const nativeCanvas = displayCanvas._nativeCanvas || displayCanvas;
+            
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = nativeCanvas.toDataURL('image/png');
+            link.click();
+        }
+
+        /**
+         * Downloads all 5 textures sequentially
+         */
+        function downloadAll() {
+            const variants = [
+                { id: 'canvas_v1', name: 'stone_wall_v1.png' },
+                { id: 'canvas_v2', name: 'stone_wall_v2.png' },
+                { id: 'canvas_v3', name: 'stone_wall_v3.png' },
+                { id: 'canvas_v4', name: 'stone_wall_v4.png' },
+                { id: 'canvas_outer', name: 'stone_outer_wall.png' }
+            ];
+
+            variants.forEach((v, index) => {
+                setTimeout(() => {
+                    downloadVariant(v.id, v.name);
+                }, index * 250);
+            });
+        }
+
+        // Initialize generator on load
+        window.onload = function() {
+            renderAll();
+        };
+    </script>
+</body>
+</html>

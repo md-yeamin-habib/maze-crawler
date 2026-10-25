@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Low-Poly Wizard Swimming Generator (Fixed Shoulders)</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        h2, h3 { margin-bottom: 5px; text-align: center; }
+        .section {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            width: 90%;
+            max-width: 1050px;
+        }
+        .grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .card {
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+        canvas {
+            background: transparent;
+            border: 1px dashed #475569;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        button {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🧙‍♂️ Low-Poly Wizard Swimming Builder</h2>
+    <p style="color: #94a3b8; margin-top: 0;">6-Frame Slanted Swimming Forward Cycle (Fixed Shoulder Clearance) — Blue Robe</p>
+
+    <div class="section">
+        <h3>Indigo Robe Swim-Forward (6 Frames)</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>Swim 1 (Glide / Reach)</h4>
+                <canvas id="blue_s1" width="220" height="220"></canvas>
+                <button onclick="downloadAsset('blue_s1', 'player_blue_swim1.png')">Download S1</button>
+            </div>
+            <div class="card">
+                <h4>Swim 2 (Early Pull)</h4>
+                <canvas id="blue_s2" width="220" height="220"></canvas>
+                <button onclick="downloadAsset('blue_s2', 'player_blue_swim2.png')">Download S2</button>
+            </div>
+            <div class="card">
+                <h4>Swim 3 (Late Pull)</h4>
+                <canvas id="blue_s3" width="220" height="220"></canvas>
+                <button onclick="downloadAsset('blue_s3', 'player_blue_swim3.png')">Download S3</button>
+            </div>
+            <div class="card">
+                <h4>Swim 4 (Recovery Start)</h4>
+                <canvas id="blue_s4" width="220" height="220"></canvas>
+                <button onclick="downloadAsset('blue_s4', 'player_blue_swim4.png')">Download S4</button>
+            </div>
+            <div class="card">
+                <h4>Swim 5 (Mid Recovery)</h4>
+                <canvas id="blue_s5" width="220" height="220"></canvas>
+                <button onclick="downloadAsset('blue_s5', 'player_blue_swim5.png')">Download S5</button>
+            </div>
+            <div class="card">
+                <h4>Swim 6 (Push / Kick)</h4>
+                <canvas id="blue_s6" width="220" height="220"></canvas>
+                <button onclick="downloadAsset('blue_s6', 'player_blue_swim6.png')">Download S6</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function drawSwimFrame(ctx, w, h, config, frameIndex) {
+            ctx.clearRect(0, 0, w, h);
+            ctx.save();
+
+            const cx = w / 2;
+            const cy = h / 2 + 80;
+
+            let progress = (frameIndex / 6) * Math.PI * 2;
+
+            // Slanted pitch forward
+            let pitchAngle = Math.sin(progress) * 0.12;
+            ctx.translate(cx, cy);
+            ctx.rotate(pitchAngle);
+            ctx.translate(-cx, -cy);
+
+            // Arm extension with a minimum floor (+10px) so shoulders never disappear in Frame 4
+            let rawSpread = Math.cos(progress) * 22;
+            let armSpread = Math.max(10, rawSpread);
+
+            // Alternating vertical flutter kick
+            let legL_Y = Math.sin(progress) * -12;
+            let legR_Y = Math.sin(progress) * 12;
+
+            // --- 1. LEGS & BOOTS ---
+            ctx.fillStyle = config.pantsColor;
+            ctx.fillRect(cx - 18, cy - 90 + legL_Y, 12, 75);
+            ctx.fillRect(cx + 6, cy - 90 + legR_Y, 12, 75);
+
+            ctx.fillStyle = config.bootColor;
+            ctx.fillRect(cx - 20, cy - 15 + legL_Y, 16, 16);
+            ctx.fillRect(cx + 4, cy - 15 + legR_Y, 16, 16);
+
+            // --- 2. ROBE BODY ---
+            ctx.fillStyle = config.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 130);
+            ctx.lineTo(cx + 22, cy - 130);
+            ctx.lineTo(cx + 36, cy - 44);
+            ctx.lineTo(cx - 36, cy - 44);
+            ctx.closePath();
+            ctx.fill();
+
+            // Shadow Fold
+            ctx.fillStyle = config.robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 130);
+            ctx.lineTo(cx, cy - 125);
+            ctx.lineTo(cx - 6, cy - 44);
+            ctx.lineTo(cx - 36, cy - 44);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = config.strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // --- 3. SLEEVES & ARMS (With Defined Shoulders) ---
+            // Left Sleeve
+            ctx.fillStyle = config.robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 126);
+            ctx.lineTo(cx - 38 - armSpread, cy - 105);
+            ctx.lineTo(cx - 26 - armSpread, cy - 95);
+            ctx.lineTo(cx - 22, cy - 104);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Right Sleeve
+            ctx.fillStyle = config.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx + 22, cy - 126);
+            ctx.lineTo(cx + 38 + armSpread, cy - 105);
+            ctx.lineTo(cx + 26 + armSpread, cy - 95);
+            ctx.lineTo(cx + 22, cy - 104);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Hands
+            ctx.fillStyle = config.skinColor;
+            ctx.fillRect(cx - 46 - armSpread, cy - 102, 8, 14);
+            ctx.fillRect(cx + 38 + armSpread, cy - 102, 8, 14);
+
+            // --- 4. NECK & HEAD ---
+            ctx.fillStyle = config.neckColor;
+            ctx.fillRect(cx - 6, cy - 142, 12, 14);
+
+            ctx.fillStyle = config.skinColor;
+            ctx.beginPath();
+            ctx.arc(cx, cy - 156, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = config.headStroke;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        const blueConfig = {
+            robeMain: '#312e81', robeShadow: '#3730a3', pantsColor: '#1e1b4b', bootColor: '#0f172a',
+            skinColor: '#ffedd5', neckColor: '#e2e8f0', strokeColor: '#0f172a', headStroke: '#cbd5e1'
+        };
+
+        // Render 6 frames
+        for (let i = 0; i < 6; i++) {
+            drawSwimFrame(document.getElementById(`blue_s${i+1}`).getContext('2d'), 220, 220, blueConfig, i);
+        }
+
+        function downloadAsset(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+    </script>
+
+</body>
+</html>

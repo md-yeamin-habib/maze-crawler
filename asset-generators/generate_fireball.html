@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Low-Poly Wizard Fireball Generator (Reference Impact)</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        h2, h3 { margin-bottom: 5px; text-align: center; }
+        .section {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            width: 95%;
+            max-width: 1100px;
+        }
+        .grid {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .card {
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        canvas {
+            background: transparent;
+            border: 1px dashed #475569;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        button {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🔥 Low-Poly Wizard Fireball Generator</h2>
+    <p style="color: #94a3b8; margin-top: 0;">Directional Impact Burst & Faceted Flame Spikes</p>
+
+    <!-- SECTION 1: PLAYER MODEL WITH TALL STAFF -->
+    <div class="section">
+        <h3>1. Player Model (Hand Overlaps Staff in Back POV)</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>Player + Staff Stance</h4>
+                <canvas id="player_staff" width="280" height="280"></canvas>
+                <button onclick="downloadAsset('player_staff', 'player_blue_staff.png')">Download Player</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2: FIREBALL FLIGHT EVOLUTION -->
+    <div class="section">
+        <h3>2. Fireball Flight Evolution (Tile 1 to Tile 5)</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>Tile 1: Teardrop (Point Towards Caster)</h4>
+                <canvas id="fb_teardrop" width="160" height="160"></canvas>
+                <button onclick="downloadAsset('fb_teardrop', 'fireball_tile1.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>Tiles 2-5: Faceted Rocket Fireball</h4>
+                <canvas id="fb_faceted" width="160" height="160"></canvas>
+                <button onclick="downloadAsset('fb_faceted', 'fireball_flight.png')">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 3: IMPACT & DISINTEGRATION -->
+    <div class="section">
+        <h3>3. Collision / Disintegration (Reference Impact Burst to Ash)</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>1. Directional Impact Burst</h4>
+                <canvas id="imp_splash" width="160" height="160"></canvas>
+                <button onclick="downloadAsset('imp_splash', 'fireball_impact.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>2. Medium Ash</h4>
+                <canvas id="ash_medium" width="160" height="160"></canvas>
+                <button onclick="downloadAsset('ash_medium', 'fireball_ash_med.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>3. Light Ash</h4>
+                <canvas id="ash_light" width="160" height="160"></canvas>
+                <button onclick="downloadAsset('ash_light', 'fireball_ash_light.png')">Download</button>
+            </div>
+            <div class="card">
+                <h4>4. Vanished</h4>
+                <canvas id="ash_clear" width="160" height="160"></canvas>
+                <button onclick="downloadAsset('ash_clear', 'fireball_ash_clear.png')">Download Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const blueConfig = {
+            robeMain: '#312e81',
+            robeShadow: '#1e1b4b',
+            pantsColor: '#1e1b4b',
+            bootColor: '#0f172a',
+            skinColor: '#ffedd5',
+            neckColor: '#e2e8f0',
+            hatBand: '#d97706',
+            strokeColor: '#0f172a'
+        };
+
+        // --- DRAW PLAYER WITH OVERLAPPING HAND (BACK POV) ---
+        function drawPlayerWithStaff(ctx, cx, cy, config) {
+            ctx.clearRect(0, 0, 280, 280);
+
+            // 1. LEGS & BOOTS
+            ctx.fillStyle = config.pantsColor;
+            ctx.fillRect(cx - 18, cy - 110, 12, 90);
+            ctx.fillRect(cx + 6, cy - 110, 12, 90);
+
+            ctx.fillStyle = config.bootColor;
+            ctx.fillRect(cx - 20, cy - 20, 16, 20);
+            ctx.fillRect(cx + 4, cy - 20, 16, 20);
+
+            // 2. ROBE BODY
+            ctx.fillStyle = config.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 150);
+            ctx.lineTo(cx + 22, cy - 150);
+            ctx.lineTo(cx + 36, cy - 54);
+            ctx.lineTo(cx - 36, cy - 54);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = config.robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 150);
+            ctx.lineTo(cx, cy - 145);
+            ctx.lineTo(cx - 6, cy - 54);
+            ctx.lineTo(cx - 36, cy - 54);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = config.strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 3. LEFT ARM (Tucked close to body)
+            ctx.fillStyle = config.robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 146);
+            ctx.lineTo(cx - 44, cy - 118);
+            ctx.lineTo(cx - 34, cy - 108);
+            ctx.lineTo(cx - 22, cy - 120);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = config.skinColor;
+            ctx.beginPath();
+            ctx.arc(cx - 38, cy - 113, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 4. DRAW STAFF SHAFT FIRST (So Hand Overlaps in Back POV)
+            let gripX = cx + 42;
+            let gripY = cy - 113;
+
+            let staffTopY = cy - 190;
+            let staffBottomY = cy - 20;
+
+            // Wooden Shaft
+            ctx.strokeStyle = '#451a03';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(gripX, staffBottomY);
+            ctx.lineTo(gripX, staffTopY + 12);
+            ctx.stroke();
+
+            // Middle Grip Metal Collar
+            ctx.fillStyle = '#0d9488';
+            ctx.fillRect(gripX - 4, gripY - 8, 8, 16);
+
+            // Top Metallic Cup
+            ctx.fillStyle = '#115e59';
+            ctx.fillRect(gripX - 5, staffTopY + 8, 10, 6);
+
+            // Glowing Cyan Orb
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = '#38bdf8';
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.arc(gripX, staffTopY, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Core Highlight
+            ctx.fillStyle = '#f0f9ff';
+            ctx.beginPath();
+            ctx.arc(gripX - 3, staffTopY - 3, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // CRITICAL FIX: Fully reset shadow properties so they don't bleed into subsequent draws (like the hand outline)
+            ctx.shadowBlur = 0;
+            ctx.shadowColor = 'transparent';
+
+            // 5. RIGHT ARM & HAND (Drawn AFTER Staff so hand overlaps front side)[cite: 20]
+            ctx.fillStyle = config.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx + 22, cy - 146);
+            ctx.lineTo(cx + 48, cy - 118);
+            ctx.lineTo(cx + 38, cy - 108);
+            ctx.lineTo(cx + 22, cy - 120);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = config.strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Right Hand Overlapping Staff Shaft (Clean outline with correct stroke color and zero shadow bleed)
+            ctx.fillStyle = config.skinColor;
+            ctx.strokeStyle = config.strokeColor;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(gripX, gripY, 6.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // 6. NECK, HEAD & COMPACT HAT
+            ctx.fillStyle = config.neckColor;
+            ctx.fillRect(cx - 6, cy - 162, 12, 14);
+
+            ctx.fillStyle = config.skinColor;
+            ctx.beginPath();
+            ctx.arc(cx, cy - 176, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = config.strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Hat
+            ctx.fillStyle = config.robeMain;
+            ctx.beginPath();
+            ctx.ellipse(cx, cy - 186, 32, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = config.hatBand;
+            ctx.beginPath();
+            ctx.ellipse(cx, cy - 188, 20, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = config.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx - 18, cy - 188);
+            ctx.lineTo(cx + 18, cy - 188);
+            ctx.lineTo(cx + 4, cy - 232);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        // --- FIREBALL SHAPES ---
+
+        // A. Tile 1 Teardrop Flame
+        function drawTeardropFireball(ctx, x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(0, -20);
+            ctx.bezierCurveTo(14, -18, 12, 10, 0, 22);
+            ctx.bezierCurveTo(-12, 10, -14, -18, 0, -20);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#f97316';
+            ctx.beginPath();
+            ctx.moveTo(0, -12);
+            ctx.bezierCurveTo(8, -10, 7, 8, 0, 15);
+            ctx.bezierCurveTo(-7, 8, -8, -10, 0, -12);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath();
+            ctx.arc(0, -4, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // B. Low-Poly Rocket Fireball (Tiles 2-5 Flight)
+        function drawFacetedRocketFireball(ctx, x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            ctx.fillStyle = '#dc2626';
+            ctx.beginPath();
+            ctx.moveTo(0, -42);
+            ctx.lineTo(20, -12);
+            ctx.lineTo(24, 18);
+            ctx.lineTo(18, 38);
+            ctx.lineTo(6, 26);
+            ctx.lineTo(0, 48);
+            ctx.lineTo(-6, 26);
+            ctx.lineTo(-18, 38);
+            ctx.lineTo(-24, 18);
+            ctx.lineTo(-20, -12);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#f97316';
+            ctx.beginPath();
+            ctx.moveTo(0, -32);
+            ctx.lineTo(14, -6);
+            ctx.lineTo(16, 16);
+            ctx.lineTo(10, 28);
+            ctx.lineTo(0, 20);
+            ctx.lineTo(-10, 28);
+            ctx.lineTo(-16, 16);
+            ctx.lineTo(-14, -6);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath();
+            ctx.moveTo(0, -22);
+            ctx.lineTo(9, -2);
+            ctx.lineTo(10, 12);
+            ctx.lineTo(0, 18);
+            ctx.lineTo(-10, 12);
+            ctx.lineTo(-9, -2);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(0, -6, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // C. Directional Reference Impact Burst (Matching Reference Image)
+        function drawReferenceImpactBurst(ctx, x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // 1. Outer Crimson Flame Shell (Flattened leading front, jagged rear flare)
+            ctx.fillStyle = '#ea580c'; // Base orange-crimson
+            ctx.beginPath();
+            ctx.moveTo(-28, -25); // Forward-left impact curve
+            ctx.lineTo(-18, -38); ctx.lineTo(-8, -30);
+            ctx.lineTo(5, -45);   ctx.lineTo(15, -32);
+            ctx.lineTo(32, -38);  ctx.lineTo(28, -20);
+            ctx.lineTo(48, -18);  ctx.lineTo(36, -2);
+            ctx.lineTo(52, 10);   ctx.lineTo(38, 22);
+            ctx.lineTo(46, 38);   ctx.lineTo(26, 32);
+            ctx.lineTo(20, 48);   ctx.lineTo(4, 38);
+            ctx.lineTo(-12, 45);  ctx.lineTo(-18, 32);
+            ctx.lineTo(-32, 28);  ctx.lineTo(-28, 12);
+            ctx.lineTo(-42, -2);  ctx.lineTo(-30, -12);
+            ctx.closePath();
+            ctx.fill();
+
+            // 2. Mid Bright Orange Inner Flares
+            ctx.fillStyle = '#f97316';
+            ctx.beginPath();
+            ctx.moveTo(-20, -18);
+            ctx.lineTo(-10, -28); ctx.lineTo(2, -22);
+            ctx.lineTo(12, -34);  ctx.lineTo(22, -22);
+            ctx.lineTo(35, -24);  ctx.lineTo(26, -10);
+            ctx.lineTo(38, 4);    ctx.lineTo(28, 15);
+            ctx.lineTo(34, 28);   ctx.lineTo(18, 24);
+            ctx.lineTo(12, 34);   ctx.lineTo(-2, 26);
+            ctx.lineTo(-14, 30);  ctx.lineTo(-20, 18);
+            ctx.lineTo(-28, 6);   ctx.lineTo(-22, -6);
+            ctx.closePath();
+            ctx.fill();
+
+            // 3. Hot Yellow Facet Core (Concentrated Impact Energy)
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath();
+            ctx.moveTo(-12, -12);
+            ctx.lineTo(-2, -20); ctx.lineTo(10, -14);
+            ctx.lineTo(20, -18); ctx.lineTo(16, -4);
+            ctx.lineTo(24, 6);   ctx.lineTo(15, 14);
+            ctx.lineTo(10, 22);  ctx.lineTo(-2, 16);
+            ctx.lineTo(-12, 18); ctx.lineTo(-16, 4);
+            ctx.lineTo(-18, -4);
+            ctx.closePath();
+            ctx.fill();
+
+            // 4. White Hot Core Hotspot
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.ellipse(-2, -2, 8, 12, Math.PI / 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // --- DRAW PURE GRAY ASH PARTICLES ---
+        function drawPureGrayAsh(ctx, cx, cy, count, spreadX, spreadY) {
+            const grayShades = ['#1e293b', '#334155', '#475569', '#64748b', '#94a3b8'];
+            for (let i = 0; i < count; i++) {
+                let px = cx + (Math.random() - 0.5) * spreadX;
+                let py = cy + (Math.random() - 0.5) * spreadY;
+                let size = Math.random() * 4 + 2;
+                ctx.fillStyle = grayShades[Math.floor(Math.random() * grayShades.length)];
+                ctx.fillRect(px, py, size, size);
+            }
+        }
+
+        // --- RENDER ALL CANVASES ---
+        const cx = 140;
+        const cy = 230;
+
+        // 1. Player Model
+        drawPlayerWithStaff(document.getElementById('player_staff').getContext('2d'), cx, cy, blueConfig);
+
+        // 2. Flight Evolution
+        drawTeardropFireball(document.getElementById('fb_teardrop').getContext('2d'), 80, 80);
+        drawFacetedRocketFireball(document.getElementById('fb_faceted').getContext('2d'), 80, 80);
+
+        // 3. Collision & Disintegration
+        drawReferenceImpactBurst(document.getElementById('imp_splash').getContext('2d'), 80, 80);
+        drawPureGrayAsh(document.getElementById('ash_medium').getContext('2d'), 80, 80, 45, 80, 80); // Medium Ash
+        drawPureGrayAsh(document.getElementById('ash_light').getContext('2d'), 80, 80, 18, 50, 50);  // Light Ash
+        document.getElementById('ash_clear').getContext('2d').clearRect(0, 0, 160, 160);               // Vanished
+
+        function downloadAsset(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+
+</body>
+</html>

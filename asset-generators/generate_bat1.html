@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cave Bat Mob - Side Profile Flight Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0b0f19;
+      color: #f8fafc;
+    }
+    .pixelated {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .checkerboard {
+      background-image: linear-gradient(45deg, #1e293b 25%, transparent 25%), 
+                        linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #1e293b 75%), 
+                        linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+      background-color: #0f172a;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start p-4 sm:p-8">
+
+  <!-- Header -->
+  <header class="text-center mb-8 max-w-2xl">
+    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">🦇 Low-Poly Cave Bat (Side Profile)</h1>
+    <p class="text-slate-400 text-sm">6-Frame Side Flight Cycle — Flying Left to Right (300px × 300px Sprites)</p>
+  </header>
+
+  <!-- Main Grid -->
+  <div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+
+    <!-- Controls Panel -->
+    <div class="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col gap-5">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-purple-400">Animation Controls</h2>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-slate-300">Animation Speed (FPS)</label>
+        <input type="range" id="animSpeed" min="2" max="12" value="8" class="w-full accent-purple-500">
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-sm font-medium text-slate-300">Frame Size</label>
+        <input type="text" value="300 x 300 px" readonly class="w-full bg-slate-800/50 border border-slate-700/50 text-slate-400 rounded-lg px-3 py-2 font-mono text-sm outline-none cursor-not-allowed">
+      </div>
+
+      <button onclick="downloadSpritesheet()" class="w-full py-3 px-4 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-600/30 transition-all flex items-center justify-center gap-2 mt-4">
+        💾 Export Side Spritesheet PNG
+      </button>
+    </div>
+
+    <!-- Preview Display Area -->
+    <div class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col gap-6">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-purple-400">Live Animation Loop</h2>
+        <span class="text-xs text-slate-400">Side Profile Motion (Left to Right)</span>
+      </div>
+
+      <!-- Live Preview Canvas -->
+      <div class="flex flex-col items-center justify-center checkerboard p-8 rounded-xl border border-slate-800 shadow-inner gap-4">
+        <canvas id="previewCanvas" width="300" height="300" class="pixelated w-[200px] h-[200px] border border-slate-700/50 rounded-xl shadow-lg bg-transparent"></canvas>
+        <span class="text-xs font-mono text-slate-400">Side Flapping Cycle Preview</span>
+      </div>
+
+      <!-- Individual 6 Frames View -->
+      <div class="flex flex-col gap-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">All 6 Side Movement Frames</h3>
+        <div id="framesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 justify-items-center">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const FRAME_SIZE = 300;
+    const TOTAL_FRAMES = 6;
+    let currentFrame = 0;
+    let animInterval = null;
+
+    function drawBatSide(ctx, frameIdx) {
+      ctx.clearRect(0, 0, FRAME_SIZE, FRAME_SIZE);
+
+      const cx = 150;
+      // Synchronized vertical bobbing motion
+      const bobY = Math.sin((frameIdx / TOTAL_FRAMES) * Math.PI * 2) * 6;
+      const cy = 150 + bobY;
+
+      // Wing Flap Phase Angle (-1 to 1) matching front/back timing
+      const flapAngles = [ -1.0, -0.5, 0.2, 0.9, 0.4, -0.4 ];
+      const wingPhase = flapAngles[frameIdx];
+
+      ctx.save();
+
+      // Palette
+      const bodyDark = '#141221';
+      const bodyMid = '#1e1b2e';
+      const bodyLight = '#433d69';
+      const wingFarMembrane = '#12101e';
+      const wingNearMembrane = '#2d2745';
+      const wingBone = '#0f0e1a';
+      const eyeRed = '#ef4444';
+      const outline = '#07060d';
+
+      function drawPoly(pts, fill, stroke = outline, lineW = 2.5) {
+        ctx.beginPath();
+        ctx.moveTo(pts[0][0], pts[0][1]);
+        for (let i = 1; i < pts.length; i++) {
+          ctx.lineTo(pts[i][0], pts[i][1]);
+        }
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+        if (stroke) {
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = lineW;
+          ctx.stroke();
+        }
+      }
+
+      // Base inclination angle during flight forward tilt
+      const bodyAngle = -0.15; // Forward pitch
+
+      // --- 1. FAR (LEFT) WING (BEHIND BODY) ---
+      const farElbowX = cx - 15;
+      const farElbowY = cy - 30 + (wingPhase * 28);
+      const farTipX = cx - 95;
+      const farTipY = cy - 10 + (wingPhase * 60);
+      const farMidX = cx - 55;
+      const farMidY = cy + 25 + (wingPhase * 40);
+
+      drawPoly([[cx - 10, cy - 5], [farElbowX, farElbowY], [farMidX, farMidY]], wingFarMembrane);
+      drawPoly([[farElbowX, farElbowY], [farTipX, farTipY], [farMidX, farMidY]], wingFarMembrane);
+      drawPoly([[cx - 5, cy + 15], [farMidX, farMidY], [cx - 25, cy + 30]], wingFarMembrane);
+      drawPoly([[cx - 10, cy - 5], [farElbowX, farElbowY], [farTipX, farTipY]], wingBone);
+
+
+      // --- 2. FAR EAR (BEHIND HEAD) ---
+      drawPoly([[cx + 2, cy - 18], [cx + 2, cy - 40], [cx + 12, cy - 22]], bodyMid);
+
+
+      // --- 3. BODY, HEAD & LEGS PROFILE ---
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(bodyAngle);
+
+      // Low-poly side body torso
+      drawPoly([[-18, -10], [18, -12], [26, -2], [15, 18], [-8, 26], [-20, 10]], bodyMid);
+      drawPoly([[-10, -8], [12, -10], [18, -2], [10, 14], [-4, 20]], bodyLight); // Highlight flank
+
+      // Head Profile facing right
+      drawPoly([[12, -14], [30, -10], [36, 0], [24, 8], [10, 2]], bodyMid);
+      drawPoly([[18, -12], [32, -8], [36, 0], [26, 6]], bodyDark); // Jawline
+
+      // Snout Tip
+      drawPoly([[32, -6], [40, -1], [32, 3]], bodyDark);
+
+      // Small Fang Profile
+      drawPoly([[30, 2], [32, 8], [34, 2]], '#ffffff', null);
+
+      // Glowing Eye (Right side view)
+      ctx.fillStyle = eyeRed;
+      ctx.shadowColor = '#f87171';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(26, -5, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(25, -7, 1.5, 1.5); // Eye highlight
+
+      // Tail & Small Rear Feet
+      drawPoly([[-18, 12], [-28, 22], [-16, 20]], bodyDark);
+      drawPoly([[-8, 22], [-14, 32], [-2, 26]], bodyDark);
+
+      ctx.restore();
+
+
+      // --- 4. NEAR (RIGHT) EAR (FOREGROUND) ---
+      drawPoly([[cx + 14, cy - 16], [cx + 18, cy - 42], [cx + 26, cy - 18]], bodyLight);
+      drawPoly([[cx + 16, cy - 18], [cx + 19, cy - 36], [cx + 23, cy - 20]], bodyMid); // Inner ear depth
+
+
+      // --- 5. NEAR (RIGHT) WING (FOREGROUND) ---
+      const nearElbowX = cx + 5;
+      const nearElbowY = cy - 35 + (wingPhase * 32);
+      const nearTipX = cx - 80;
+      const nearTipY = cy - 15 + (wingPhase * 68);
+      const nearMidX = cx - 45;
+      const nearMidY = cy + 30 + (wingPhase * 42);
+      const nearInnerX = cx + 15;
+      const nearInnerY = cy + 18;
+
+      // Near Wing Membrane Polygons
+      drawPoly([[cx + 10, cy - 10], [nearElbowX, nearElbowY], [nearMidX, nearMidY]], wingNearMembrane);
+      drawPoly([[nearElbowX, nearElbowY], [nearTipX, nearTipY], [nearMidX, nearMidY]], wingNearMembrane);
+      drawPoly([[nearMidX, nearMidY], [nearInnerX, nearInnerY], [cx - 15, cy + 25]], wingFarMembrane);
+
+      // Near Wing Bone Struts
+      drawPoly([[cx + 10, cy - 10], [nearElbowX, nearElbowY], [nearTipX, nearTipY]], wingBone);
+      drawPoly([[nearElbowX, nearElbowY], [nearMidX, nearMidY]], wingBone);
+
+      ctx.restore();
+    }
+
+    function renderAllFrames() {
+      const container = document.getElementById('framesGrid');
+      container.innerHTML = '';
+
+      for (let i = 0; i < TOTAL_FRAMES; i++) {
+        const canvas = document.createElement('canvas');
+        canvas.width = FRAME_SIZE;
+        canvas.height = FRAME_SIZE;
+        canvas.className = 'pixelated w-[90px] h-[90px] border border-slate-700/60 rounded-xl bg-slate-950 shadow-md';
+        
+        drawBatSide(canvas.getContext('2d'), i);
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex flex-col items-center gap-1';
+        
+        const label = document.createElement('span');
+        label.className = 'text-[10px] font-mono text-slate-400';
+        label.innerText = `Frame ${i + 1}`;
+
+        wrapper.appendChild(canvas);
+        wrapper.appendChild(label);
+        container.appendChild(wrapper);
+      }
+    }
+
+    function startAnimation() {
+      if (animInterval) clearInterval(animInterval);
+      const fps = parseInt(document.getElementById('animSpeed').value) || 8;
+      const pCtx = document.getElementById('previewCanvas').getContext('2d');
+
+      animInterval = setInterval(() => {
+        pCtx.clearRect(0, 0, FRAME_SIZE, FRAME_SIZE);
+        drawBatSide(pCtx, currentFrame);
+        currentFrame = (currentFrame + 1) % TOTAL_FRAMES;
+      }, 1000 / fps);
+    }
+
+    document.getElementById('animSpeed').oninput = startAnimation;
+
+    function downloadSpritesheet() {
+      const sheetCanvas = document.createElement('canvas');
+      sheetCanvas.width = FRAME_SIZE * TOTAL_FRAMES;
+      sheetCanvas.height = FRAME_SIZE;
+      const sCtx = sheetCanvas.getContext('2d');
+
+      for (let i = 0; i < TOTAL_FRAMES; i++) {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = FRAME_SIZE;
+        tempCanvas.height = FRAME_SIZE;
+        drawBatSide(tempCanvas.getContext('2d'), i);
+        sCtx.drawImage(tempCanvas, i * FRAME_SIZE, 0);
+      }
+
+      const link = document.createElement('a');
+      link.download = 'bat_side_flight_spritesheet.png';
+      link.href = sheetCanvas.toDataURL('image/png');
+      link.click();
+    }
+
+    window.onload = () => {
+      renderAllFrames();
+      startAnimation();
+    };
+  </script>
+</body>
+</html>

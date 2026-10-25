@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Low-Poly HP & MP Item Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #f1f5f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .canvas-bg {
+            background-color: #111827;
+            background-image: 
+                linear-gradient(45deg, #1f2937 25%, transparent 25%), 
+                linear-gradient(-45deg, #1f2937 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #1f2937 75%), 
+                linear-gradient(-45deg, transparent 75%, #1f2937 75%);
+            background-size: 24px 24px;
+            background-position: 0 0, 0 12px, 12px -12px, -12px 0px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-6 flex flex-col items-center justify-start">
+
+    <!-- Header -->
+    <header class="text-center mb-6">
+        <h1 class="text-3xl font-bold text-amber-400 tracking-wide mb-1">🎮 Low-Poly Recovery Item Generator</h1>
+        <p class="text-slate-400 text-sm">3/4 Isometric Pseudo-3D Sprites for HP & MP Recovery Assets</p>
+    </header>
+
+    <!-- Global Controls Bar -->
+    <div class="w-full max-w-5xl bg-slate-800/80 border border-slate-700 backdrop-blur rounded-xl p-4 mb-8 flex flex-wrap gap-6 items-center justify-between shadow-xl">
+        <div class="flex flex-wrap items-center gap-6">
+            <!-- Light Intensity Slider -->
+            <div class="flex flex-col gap-1 w-44">
+                <div class="flex justify-between text-xs font-semibold text-slate-300">
+                    <span>Key Light</span>
+                    <span id="lightVal">1.0x</span>
+                </div>
+                <input type="range" id="lightIntensity" min="0.4" max="1.8" step="0.1" value="1.0" class="accent-amber-500 cursor-pointer" oninput="updateAllItems()">
+            </div>
+
+            <!-- Rotation Speed / Yaw -->
+            <div class="flex flex-col gap-1 w-44">
+                <div class="flex justify-between text-xs font-semibold text-slate-300">
+                    <span>Y-Rotation</span>
+                    <span id="rotVal">45°</span>
+                </div>
+                <input type="range" id="rotAngle" min="0" max="360" step="5" value="45" class="accent-amber-500 cursor-pointer" oninput="updateAllItems()">
+            </div>
+
+            <!-- Sparkle Density for MP Potion -->
+            <div class="flex flex-col gap-1 w-44">
+                <div class="flex justify-between text-xs font-semibold text-slate-300">
+                    <span>MP Sparkles</span>
+                    <span id="sparkleVal">20</span>
+                </div>
+                <input type="range" id="sparkleCount" min="0" max="50" step="2" value="20" class="accent-cyan-500 cursor-pointer" oninput="updateAllItems()">
+            </div>
+        </div>
+
+        <!-- Export All Button -->
+        <button onclick="downloadAll()" class="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold py-2.5 px-5 rounded-lg border border-amber-400/30 shadow-lg shadow-amber-900/30 transition hover:-translate-y-0.5 active:translate-y-0 text-sm flex items-center gap-2">
+            <span>📦 Download Batch PNGs</span>
+        </button>
+    </div>
+
+    <!-- Cards Container -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
+
+        <!-- ITEM 1: MP POTION -->
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 flex flex-col items-center shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 to-blue-600"></div>
+            
+            <div class="flex justify-between items-center w-full mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-cyan-400">MP Recovery Potion</h2>
+                    <p class="text-xs text-slate-400">Smooth glass bottle with 70% blue liquid & internal sparkles</p>
+                </div>
+                <span class="bg-cyan-950 text-cyan-300 text-xs font-mono px-2.5 py-1 rounded-md border border-cyan-800">mp_potion.png</span>
+            </div>
+
+            <!-- Canvas Wrapper -->
+            <div class="canvas-bg border-2 border-slate-700 rounded-xl p-3 mb-5 shadow-inner">
+                <canvas id="mpCanvas" width="400" height="400" class="w-[300px] h-[300px] block cursor-grab active:cursor-grabbing"></canvas>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="flex items-center justify-between w-full">
+                <div class="text-xs text-slate-400 flex items-center gap-2">
+                    <span class="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span>800 × 800 Transparent Output</span>
+                </div>
+                <button onclick="downloadPNG('mpCanvas', 'mp_potion.png')" class="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 px-4 rounded-lg text-xs transition border border-cyan-400/30 shadow-md">
+                    💾 Export PNG
+                </button>
+            </div>
+        </div>
+
+        <!-- ITEM 2: HP APPLE -->
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 flex flex-col items-center shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-red-700"></div>
+
+            <div class="flex justify-between items-center w-full mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-red-400">HP Recovery Apple</h2>
+                    <p class="text-xs text-slate-400">Fresh red apple with stem and green leaf</p>
+                </div>
+                <span class="bg-red-950 text-red-300 text-xs font-mono px-2.5 py-1 rounded-md border border-red-800">hp_apple.png</span>
+            </div>
+
+            <!-- Canvas Wrapper -->
+            <div class="canvas-bg border-2 border-slate-700 rounded-xl p-3 mb-5 shadow-inner">
+                <canvas id="hpCanvas" width="400" height="400" class="w-[300px] h-[300px] block cursor-grab active:cursor-grabbing"></canvas>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="flex items-center justify-between w-full">
+                <div class="text-xs text-slate-400 flex items-center gap-2">
+                    <span class="inline-block w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
+                    <span>800 × 800 Transparent Output</span>
+                </div>
+                <button onclick="downloadPNG('hpCanvas', 'hp_apple.png')" class="bg-red-600 hover:bg-red-500 text-white font-semibold py-2 px-4 rounded-lg text-xs transition border border-red-400/30 shadow-md">
+                    💾 Export PNG
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        // Material Utility
+        function getMat(colorHex, roughness = 0.5, metalness = 0.1, transparent = false, opacity = 1.0, flatShading = false) {
+            return new THREE.MeshStandardMaterial({
+                color: colorHex,
+                flatShading: flatShading,
+                roughness: roughness,
+                metalness: metalness,
+                transparent: transparent,
+                opacity: opacity,
+                side: THREE.DoubleSide
+            });
+        }
+
+        // --- ITEM 1: MP POTION MESH GENERATION ---
+        function createMpPotionMesh(sparkleCount) {
+            const group = new THREE.Group();
+
+            // Smooth transparent materials
+            const matGlass = getMat(0xe0f2fe, 0.1, 0.1, true, 0.3, false);
+            const matRim = getMat(0xbae6fd, 0.15, 0.2, true, 0.5, false);
+            const matLiquid = getMat(0x0284c7, 0.2, 0.0, false, 0.9, false);
+            const matLiquidTop = getMat(0x38bdf8, 0.15, 0.0, false, 1.0, false);
+            const matCork = getMat(0x78350f, 0.8, 0.0, false, 1.0, true);
+            
+            // Blue-ish sparkle materials
+            const matSparkleCyan = new THREE.MeshBasicMaterial({ color: 0x7dd3fc });
+            const matSparkleWhite = new THREE.MeshBasicMaterial({ color: 0xe0f2fe });
+
+            const bulbRadius = 1.25;
+
+            // 1. Smooth Outer Glass Sphere
+            const glassGeo = new THREE.SphereGeometry(bulbRadius, 32, 32);
+            const glassMesh = new THREE.Mesh(glassGeo, matGlass);
+            glassMesh.position.y = 1.25;
+            group.add(glassMesh);
+
+            // 2. Neck & Rim
+            const neckGeo = new THREE.CylinderGeometry(0.42, 0.48, 0.8, 24);
+            const neckMesh = new THREE.Mesh(neckGeo, matGlass);
+            neckMesh.position.y = 2.4;
+            group.add(neckMesh);
+
+            const rimGeo = new THREE.TorusGeometry(0.46, 0.07, 16, 24);
+            const rimMesh = new THREE.Mesh(rimGeo, matRim);
+            rimMesh.rotation.x = Math.PI / 2;
+            rimMesh.position.y = 2.8;
+            group.add(rimMesh);
+
+            // 3. 70% Liquid Level Mesh (Truncated inner sphere)
+            const liquidRadius = 1.18;
+            const liquidGeo = new THREE.SphereGeometry(liquidRadius, 32, 32);
+            const pos = liquidGeo.attributes.position;
+            
+            const fillCutoffY = 0.35; // 70% height cutoff relative to sphere center
+            for (let i = 0; i < pos.count; i++) {
+                if (pos.getY(i) > fillCutoffY) {
+                    pos.setY(i, fillCutoffY);
+                }
+            }
+            liquidGeo.computeVertexNormals();
+
+            const liquidMesh = new THREE.Mesh(liquidGeo, matLiquid);
+            liquidMesh.position.y = 1.22;
+            group.add(liquidMesh);
+
+            // Circular Surface Cap on Top of Liquid
+            const capGeo = new THREE.CylinderGeometry(0.92, 0.92, 0.02, 24);
+            const capMesh = new THREE.Mesh(capGeo, matLiquidTop);
+            capMesh.position.y = 1.22 + fillCutoffY;
+            group.add(capMesh);
+
+            // 4. Wooden Cork Plug
+            const corkGeo = new THREE.CylinderGeometry(0.44, 0.36, 0.5, 12);
+            const corkMesh = new THREE.Mesh(corkGeo, matCork);
+            corkMesh.position.y = 2.92;
+            group.add(corkMesh);
+
+            // 5. Internal Blue Sparkles (Strictly inside the liquid sphere)
+            const sparkleGroup = new THREE.Group();
+            let count = 0;
+            let attempts = 0;
+
+            while (count < sparkleCount && attempts < 500) {
+                attempts++;
+                // Spherical random position relative to liquid center
+                const r = Math.random() * (liquidRadius - 0.15);
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+
+                const sx = r * Math.sin(phi) * Math.cos(theta);
+                const sy = r * Math.cos(phi);
+                const sz = r * Math.sin(phi) * Math.sin(theta);
+
+                // Ensure sparkle is below liquid cutoff surface height
+                if (sy <= fillCutoffY - 0.08) {
+                    const isWhite = Math.random() > 0.6;
+                    const spGeo = new THREE.OctahedronGeometry(0.03 + Math.random() * 0.04, 0);
+                    const spMesh = new THREE.Mesh(spGeo, isWhite ? matSparkleWhite : matSparkleCyan);
+                    spMesh.position.set(sx, 1.22 + sy, sz);
+                    spMesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+                    sparkleGroup.add(spMesh);
+                    count++;
+                }
+            }
+            group.add(sparkleGroup);
+
+            return group;
+        }
+
+        // --- ITEM 2: HP APPLE MESH GENERATION ---
+        function createHpAppleMesh() {
+            const group = new THREE.Group();
+
+            // Materials
+            const matAppleRed = getMat(0xd97706, 0.3, 0.0, false, 1.0, false);
+            matAppleRed.color.setHex(0xdc2626); // Deep rich red
+            const matStem = getMat(0x451a03, 0.8, 0.0, false, 1.0, true);
+            const matLeaf = getMat(0x16a34a, 0.5, 0.0, false, 1.0, true);
+
+            // 1. Smooth Apple Body with top & bottom indentations
+            const appleRadius = 1.15;
+            const appleGeo = new THREE.SphereGeometry(appleRadius, 28, 24);
+            const pos = appleGeo.attributes.position;
+
+            for (let i = 0; i < pos.count; i++) {
+                let x = pos.getX(i);
+                let y = pos.getY(i);
+                let z = pos.getZ(i);
+
+                const ny = y / appleRadius;
+                const distXZ = Math.sqrt(x * x + z * z);
+
+                // Indent top center for stem cavity
+                if (ny > 0.4) {
+                    const topIndent = (1 - (distXZ / appleRadius)) * 0.28;
+                    y -= topIndent;
+                }
+
+                // Taper bottom slightly
+                if (ny < -0.2) {
+                    const bottomTaper = 1 - Math.abs(ny) * 0.2;
+                    x *= bottomTaper;
+                    z *= bottomTaper;
+                }
+
+                pos.setX(i, x);
+                pos.setY(i, y);
+                pos.setZ(i, z);
+            }
+            appleGeo.computeVertexNormals();
+
+            const appleMesh = new THREE.Mesh(appleGeo, matAppleRed);
+            appleMesh.position.y = 1.15;
+            group.add(appleMesh);
+
+            // 2. Brown Curved Stem
+            const stemGeo = new THREE.CylinderGeometry(0.05, 0.04, 0.55, 8);
+            stemGeo.rotateZ(-0.2);
+            const stemMesh = new THREE.Mesh(stemGeo, matStem);
+            stemMesh.position.set(-0.06, 2.2, 0);
+            group.add(stemMesh);
+
+            // 3. Stylized Green Leaf
+            const leafShape = new THREE.Shape();
+            leafShape.moveTo(0, 0);
+            leafShape.quadraticCurveTo(0.25, 0.2, 0.45, 0.05);
+            leafShape.quadraticCurveTo(0.25, -0.2, 0, 0);
+
+            const extrudeSettings = { depth: 0.02, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.01, bevelThickness: 0.01 };
+            const leafGeo = new THREE.ExtrudeGeometry(leafShape, extrudeSettings);
+            const leafMesh = new THREE.Mesh(leafGeo, matLeaf);
+            leafMesh.position.set(0.02, 2.15, 0.02);
+            leafMesh.rotation.set(0.3, 0.4, -0.2);
+            group.add(leafMesh);
+
+            return group;
+        }
+
+        // --- RENDER & SCENE SETUP ---
+        const scenes = {};
+        const renderers = {};
+
+        function initScene(canvasId, createMeshFn) {
+            const canvas = document.getElementById(canvasId);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+            renderer.setSize(800, 800, false);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            const scene = new THREE.Scene();
+
+            // Orthographic Isometric Camera
+            const d = 2.4;
+            const camera = new THREE.OrthographicCamera(-d, d, d, -d, 0.1, 1000);
+            camera.position.set(4, 3.2, 5);
+            camera.lookAt(0, 1.15, 0);
+
+            // Lighting Setup
+            const ambientLight = new THREE.AmbientLight(0xf8fafc, 0.7);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xfff7ed, 1.0);
+            dirLight.position.set(5, 8, 6);
+            scene.add(dirLight);
+
+            const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.35);
+            fillLight.position.set(-5, 3, -4);
+            scene.add(fillLight);
+
+            scenes[canvasId] = { scene, camera, dirLight, createMeshFn, meshGroup: null };
+            renderers[canvasId] = renderer;
+
+            // Interactive Drag to Rotate
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+
+            canvas.addEventListener('mousedown', () => isDragging = true);
+            canvas.addEventListener('mouseup', () => isDragging = false);
+            canvas.addEventListener('mouseleave', () => isDragging = false);
+            canvas.addEventListener('mousemove', (e) => {
+                if (isDragging && scenes[canvasId].meshGroup) {
+                    const deltaMove = { x: e.offsetX - previousMousePosition.x };
+                    scenes[canvasId].meshGroup.rotation.y += deltaMove.x * 0.015;
+                }
+                previousMousePosition = { x: e.offsetX, y: e.offsetY };
+            });
+
+            // Initial Draw
+            updateItem(canvasId);
+        }
+
+        function updateItem(canvasId) {
+            const s = scenes[canvasId];
+            if (!s) return;
+
+            const lightIntensity = parseFloat(document.getElementById('lightIntensity').value);
+            const rotAngleRad = (parseInt(document.getElementById('rotAngle').value) * Math.PI) / 180;
+            const sparkleCount = parseInt(document.getElementById('sparkleCount').value);
+
+            // Update Lighting
+            s.dirLight.intensity = lightIntensity;
+
+            // Remove old mesh
+            if (s.meshGroup) {
+                s.scene.remove(s.meshGroup);
+            }
+
+            // Create new mesh
+            s.meshGroup = s.createMeshFn(sparkleCount);
+            s.meshGroup.rotation.y = rotAngleRad;
+            s.scene.add(s.meshGroup);
+
+            // Render
+            renderers[canvasId].render(s.scene, s.camera);
+        }
+
+        function updateAllItems() {
+            document.getElementById('lightVal').innerText = document.getElementById('lightIntensity').value + 'x';
+            document.getElementById('rotVal').innerText = document.getElementById('rotAngle').value + '°';
+            document.getElementById('sparkleVal').innerText = document.getElementById('sparkleCount').value;
+
+            updateItem('mpCanvas');
+            updateItem('hpCanvas');
+        }
+
+        // --- DOWNLOAD UTILITIES ---
+        function downloadPNG(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function downloadAll() {
+            downloadPNG('mpCanvas', 'mp_potion.png');
+            setTimeout(() => downloadPNG('hpCanvas', 'hp_apple.png'), 200);
+        }
+
+        // Initialize on load
+        window.onload = function () {
+            initScene('mpCanvas', (sparkleCount) => createMpPotionMesh(sparkleCount));
+            initScene('hpCanvas', () => createHpAppleMesh());
+            updateAllItems();
+        };
+    </script>
+</body>
+</html>

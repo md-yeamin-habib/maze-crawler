@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Low-Poly Blue Robe Wizard Asset & Hat Generator (With Staff Variants)</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        h2, h3 { margin-bottom: 5px; text-align: center; }
+        .section {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            width: 95%;
+            max-width: 1100px;
+        }
+        .grid {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .card {
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        canvas {
+            background: transparent;
+            border: 1px dashed #475569;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        button {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            transform: scale(1.05);
+        }
+        .controls {
+            margin-top: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🧙‍♂️ Blue Robe Wizard Hat & Staff Asset Generator</h2>
+    <p style="color: #94a3b8; margin-top: 0;">Generates standard and staff-holding variants for Idle, Walk, and Run animation cycles.</p>
+
+    <div class="controls">
+        <button onclick="generateAllAssets()" style="padding: 10px 20px; font-size: 13px;">🔄 Regenerate / Redraw All Assets</button>
+    </div>
+
+    <!-- IDLE & SPECIAL -->
+    <div class="section">
+        <h3>Idle States</h3>
+        <div class="grid" id="grid-special"></div>
+    </div>
+
+    <!-- WALK CYCLE -->
+    <div class="section">
+        <h3>Walk Cycle (4 Frames + Staff Variants)</h3>
+        <div class="grid" id="grid-walk"></div>
+    </div>
+
+    <!-- RUN CYCLE -->
+    <div class="section">
+        <h3>Run Cycle (4 Frames + Staff Variants)</h3>
+        <div class="grid" id="grid-run"></div>
+    </div>
+
+    <script>
+        const assetDefinitions = {
+            special: [
+                { id: 'blue_robe', name: 'Standard Idle', filename: 'player_blue_robe.png', type: 'idle', hasStaff: false },
+                { id: 'blue_robe_staff', name: 'Idle with Staff', filename: 'player_blue_robe_staff.png', type: 'idle', hasStaff: true }
+            ],
+            walk: [
+                { id: 'blue_w1', name: 'Walk 1', filename: 'player_blue_walk1.png', progress: -1.0, hasStaff: false },
+                { id: 'blue_w1_staff', name: 'Walk 1 + Staff', filename: 'player_blue_walk1_staff.png', progress: -1.0, hasStaff: true },
+                { id: 'blue_w2', name: 'Walk 2', filename: 'player_blue_walk2.png', progress: 0.0, hasStaff: false },
+                { id: 'blue_w2_staff', name: 'Walk 2 + Staff', filename: 'player_blue_walk2_staff.png', progress: 0.0, hasStaff: true },
+                { id: 'blue_w3', name: 'Walk 3', filename: 'player_blue_walk3.png', progress: 1.0, hasStaff: false },
+                { id: 'blue_w3_staff', name: 'Walk 3 + Staff', filename: 'player_blue_walk3_staff.png', progress: 1.0, hasStaff: true },
+                { id: 'blue_w4', name: 'Walk 4', filename: 'player_blue_walk4.png', progress: 0.0, hasStaff: false },
+                { id: 'blue_w4_staff', name: 'Walk 4 + Staff', filename: 'player_blue_walk4_staff.png', progress: 0.0, hasStaff: true }
+            ],
+            run: [
+                { id: 'blue_r1', name: 'Run 1', filename: 'player_blue_run1.png', progress: -1.0, hasStaff: false },
+                { id: 'blue_r1_staff', name: 'Run 1 + Staff', filename: 'player_blue_run1_staff.png', progress: -1.0, hasStaff: true },
+                { id: 'blue_r2', name: 'Run 2', filename: 'player_blue_run2.png', progress: 0.0, hasStaff: false },
+                { id: 'blue_r2_staff', name: 'Run 2 + Staff', filename: 'player_blue_run2_staff.png', progress: 0.0, hasStaff: true },
+                { id: 'blue_r3', name: 'Run 3', filename: 'player_blue_run3.png', progress: 1.0, hasStaff: false },
+                { id: 'blue_r3_staff', name: 'Run 3 + Staff', filename: 'player_blue_run3_staff.png', progress: 1.0, hasStaff: true },
+                { id: 'blue_r4', name: 'Run 4', filename: 'player_blue_run4.png', progress: 0.0, hasStaff: false },
+                { id: 'blue_r4_staff', name: 'Run 4 + Staff', filename: 'player_blue_run4_staff.png', progress: 0.0, hasStaff: true }
+            ]
+        };
+
+        function initUI() {
+            for (let cat in assetDefinitions) {
+                const container = document.getElementById(`grid-${cat}`);
+                container.innerHTML = '';
+                assetDefinitions[cat].forEach(item => {
+                    container.innerHTML += `
+                        <div class="card">
+                            <h4>${item.name}</h4>
+                            <canvas id="${item.id}" width="256" height="256"></canvas>
+                            <button onclick="downloadAsset('${item.id}', '${item.filename}')">Download</button>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        // Procedural wizard hat
+        function drawWizardHat(ctx, x, y, width, height, tilt = 0) {
+            ctx.save();
+            ctx.translate(x, y);
+            if (tilt !== 0) ctx.rotate(tilt);
+
+            const hw = width / 2;
+            const hh = height / 2;
+
+            // Brim
+            ctx.fillStyle = '#312e81';
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.ellipse(0, hh * 0.5, hw * 1.15, hh * 0.22, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Cone Body
+            ctx.beginPath();
+            ctx.moveTo(0, -hh * 1.2);
+            ctx.lineTo(hw * 0.85, hh * 0.5);
+            ctx.lineTo(-hw * 0.85, hh * 0.5);
+            ctx.closePath();
+            ctx.fillStyle = '#3730a3';
+            ctx.fill();
+            ctx.stroke();
+
+            // Cone highlight fold
+            ctx.beginPath();
+            ctx.moveTo(0, -hh * 1.2);
+            ctx.lineTo(0, hh * 0.5);
+            ctx.lineTo(-hw * 0.85, hh * 0.5);
+            ctx.closePath();
+            ctx.fillStyle = '#4f46e5';
+            ctx.fill();
+
+            // Hatband
+            ctx.fillStyle = '#d97706';
+            ctx.beginPath();
+            ctx.moveTo(-hw * 0.72, hh * 0.2);
+            ctx.lineTo(hw * 0.72, hh * 0.2);
+            ctx.lineTo(hw * 0.78, hh * 0.4);
+            ctx.lineTo(-hw * 0.78, hh * 0.4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // Magic Staff rendering function centered around grip point (0,0)
+        function drawMagicStaff(ctx, gripX, gripY, angle) {
+            ctx.save();
+            ctx.translate(gripX, gripY);
+            ctx.rotate(angle);
+
+            // 1. Shaft Stick (Wood)
+            ctx.fillStyle = '#3f1d0b';
+            ctx.fillRect(-2.5, -75, 5, 130);
+
+            // 2. Teal Mid Handle
+            ctx.fillStyle = '#0d9488';
+            ctx.fillRect(-3.5, -8, 7, 16);
+
+            // 3. Gem Socket Base
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.moveTo(-7, -75);
+            ctx.lineTo(7, -75);
+            ctx.lineTo(5, -68);
+            ctx.lineTo(-5, -68);
+            ctx.closePath();
+            ctx.fill();
+
+            // 4. Glowing Orb Gem
+            ctx.save();
+            ctx.shadowColor = '#06b6d4';
+            ctx.shadowBlur = 12;
+            ctx.fillStyle = '#06b6d4';
+            ctx.beginPath();
+            ctx.arc(0, -85, 11, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Orb Highlight Spot
+            ctx.fillStyle = '#e0f2fe';
+            ctx.beginPath();
+            ctx.arc(-3, -88, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            ctx.restore();
+        }
+
+        const blueConfig = {
+            robeMain: '#312e81', robeShadow: '#3730a3', pantsColor: '#1e1b4b', bootColor: '#0f172a',
+            skinColor: '#ffedd5', neckColor: '#e2e8f0', strokeColor: '#0f172a', headStroke: '#cbd5e1'
+        };
+
+        // 1. Render Idle States
+        function renderIdle(canvasId, hasStaff) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 256, 256);
+            const cx = 128;
+            const cy = 256 / 2 + 105;
+
+            // Legs & Boots
+            ctx.fillStyle = blueConfig.pantsColor;
+            ctx.fillRect(cx - 18, cy - 58, 12, 38);
+            ctx.fillRect(cx + 6, cy - 58, 12, 38);
+            ctx.fillStyle = blueConfig.bootColor;
+            ctx.fillRect(cx - 20, cy - 20, 16, 20);
+            ctx.fillRect(cx + 4, cy - 20, 16, 20);
+
+            // Robe Body
+            ctx.fillStyle = blueConfig.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx - 18, cy - 150);
+            ctx.lineTo(cx + 18, cy - 150);
+            ctx.lineTo(cx + 34, cy - 54);
+            ctx.lineTo(cx - 34, cy - 54);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = blueConfig.robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 18, cy - 150);
+            ctx.lineTo(cx, cy - 145);
+            ctx.lineTo(cx - 6, cy - 54);
+            ctx.lineTo(cx - 34, cy - 54);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = blueConfig.strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Sleeves & Left Arm
+            ctx.fillStyle = blueConfig.robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 18, cy - 146);
+            ctx.lineTo(cx - 64, cy - 132);
+            ctx.lineTo(cx - 54, cy - 114);
+            ctx.lineTo(cx - 20, cy - 126);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Right Sleeve
+            ctx.fillStyle = blueConfig.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx + 18, cy - 146);
+            ctx.lineTo(cx + 64, cy - 132);
+            ctx.lineTo(cx + 54, cy - 114);
+            ctx.lineTo(cx + 20, cy - 126);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Left Hand
+            ctx.fillStyle = blueConfig.skinColor;
+            ctx.fillRect(cx - 70, cy - 132, 8, 16);
+
+            // Right Hand & Staff Layering
+            const handX = cx + 62;
+            const handY = cy - 132;
+            
+            if (hasStaff) {
+                // Staff drawn BEHIND the hand, inclined with the right arm
+                drawMagicStaff(ctx, handX + 4, handY + 8, 0.06);
+            }
+
+            // Right Hand (overlaps stick)
+            ctx.fillStyle = blueConfig.skinColor;
+            ctx.fillRect(handX, handY, 8, 16);
+
+            // Neck & Head
+            ctx.fillStyle = blueConfig.neckColor;
+            ctx.fillRect(cx - 6, cy - 162, 12, 14);
+            ctx.fillStyle = blueConfig.skinColor;
+            ctx.beginPath();
+            ctx.arc(cx, cy - 176, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = blueConfig.headStroke;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Hat
+            drawWizardHat(ctx, cx, (cy - 176) - 22, 64, 58, 0);
+        }
+
+        // 2. Render Walk Cycle Frames
+        function renderWalk(canvasId, stepProgress, hasStaff) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 256, 256);
+            const cx = 256 / 2;
+            const cy = 256 / 2 + 105;
+
+            let legL_Y = stepProgress * -8;
+            let legR_Y = stepProgress * 8;
+
+            ctx.fillStyle = blueConfig.pantsColor;
+            ctx.fillRect(cx - 18, cy - 110, 12, 90 + legL_Y);
+            ctx.fillRect(cx + 6, cy - 110, 12, 90 + legR_Y);
+
+            ctx.fillStyle = blueConfig.bootColor;
+            ctx.fillRect(cx - 20, cy - 20 + legL_Y, 16, 20);
+            ctx.fillRect(cx + 4, cy - 20 + legR_Y, 16, 20);
+
+            ctx.fillStyle = blueConfig.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 150);
+            ctx.lineTo(cx + 22, cy - 150);
+            ctx.lineTo(cx + 36, cy - 54);
+            ctx.lineTo(cx - 36, cy - 54);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = blueConfig.robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 150);
+            ctx.lineTo(cx, cy - 145);
+            ctx.lineTo(cx - 6, cy - 54);
+            ctx.lineTo(cx - 36, cy - 54);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = blueConfig.strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            let isLeftForward = (stepProgress > 0);
+            let isRightForward = (stepProgress < 0);
+
+            // Left Sleeve
+            ctx.fillStyle = blueConfig.robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 146);
+            if (isLeftForward) {
+                ctx.lineTo(cx - 52, cy - 105);
+                ctx.lineTo(cx - 40, cy - 95);
+            } else {
+                ctx.lineTo(cx - 40, cy - 102);
+                ctx.lineTo(cx - 28, cy - 96);
+            }
+            ctx.lineTo(cx - 22, cy - 120);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Right Sleeve
+            ctx.fillStyle = blueConfig.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx + 22, cy - 146);
+            if (isRightForward) {
+                ctx.lineTo(cx + 52, cy - 105);
+                ctx.lineTo(cx + 40, cy - 95);
+            } else {
+                ctx.lineTo(cx + 40, cy - 102);
+                ctx.lineTo(cx + 28, cy - 96);
+            }
+            ctx.lineTo(cx + 22, cy - 120);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Left Hand
+            ctx.fillStyle = blueConfig.skinColor;
+            if (isLeftForward) {
+                ctx.beginPath();
+                ctx.moveTo(cx - 52, cy - 105);
+                ctx.lineTo(cx - 58, cy - 98);
+                ctx.lineTo(cx - 46, cy - 88);
+                ctx.lineTo(cx - 40, cy - 95);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(cx - 40, cy - 102);
+                ctx.lineTo(cx - 44, cy - 95);
+                ctx.lineTo(cx - 32, cy - 89);
+                ctx.lineTo(cx - 28, cy - 96);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Right Hand Grip Points
+            let rhGripX = isRightForward ? cx + 46 : cx + 34;
+            let rhGripY = isRightForward ? cy - 92 : cy - 95;
+            let staffAngle = isRightForward ? 0.12 : 0.04;
+
+            if (hasStaff) {
+                drawMagicStaff(ctx, rhGripX, rhGripY, staffAngle);
+            }
+
+            // Right Hand (Overlaps staff stick)
+            ctx.fillStyle = blueConfig.skinColor;
+            if (isRightForward) {
+                ctx.beginPath();
+                ctx.moveTo(cx + 52, cy - 105);
+                ctx.lineTo(cx + 58, cy - 98);
+                ctx.lineTo(cx + 46, cy - 88);
+                ctx.lineTo(cx + 40, cy - 95);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(cx + 40, cy - 102);
+                ctx.lineTo(cx + 44, cy - 95);
+                ctx.lineTo(cx + 32, cy - 89);
+                ctx.lineTo(cx + 28, cy - 96);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Head & Hat
+            ctx.fillStyle = blueConfig.neckColor;
+            ctx.fillRect(cx - 6, cy - 162, 12, 14);
+            ctx.fillStyle = blueConfig.skinColor;
+            ctx.beginPath();
+            ctx.arc(cx, cy - 176, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = blueConfig.headStroke;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            drawWizardHat(ctx, cx, (cy - 176) - 22, 64, 58, 0);
+        }
+
+        // 3. Render Run Cycle Frames
+        function renderRun(canvasId, stepProgress, hasStaff) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 256, 256);
+            const cx = 256 / 2;
+            const cy = 256 / 2 + 105;
+
+            let bounce = Math.abs(stepProgress) * -4;
+            let legL_Y = (stepProgress * -14) + bounce;
+            let legR_Y = (stepProgress * 14) + bounce;
+            let armL_Y = stepProgress * 5;
+            let armR_Y = stepProgress * -5;
+            let isLeftRaised = (legL_Y < legR_Y);
+
+            if (isLeftRaised) {
+                ctx.fillStyle = blueConfig.pantsColor;
+                ctx.fillRect(cx - 18, cy - 110 + bounce, 12, 60 + legL_Y);
+                ctx.fillRect(cx - 18, cy - 50 + legL_Y, 12, 32);
+                ctx.fillStyle = blueConfig.bootColor;
+                ctx.fillRect(cx - 20, cy - 20 + legL_Y, 16, 20);
+
+                ctx.fillStyle = blueConfig.pantsColor;
+                ctx.fillRect(cx + 6, cy - 110 + bounce, 12, 90 + legR_Y);
+                ctx.fillStyle = blueConfig.bootColor;
+                ctx.fillRect(cx + 4, cy - 20 + legR_Y, 16, 20);
+            } else {
+                ctx.fillStyle = blueConfig.pantsColor;
+                ctx.fillRect(cx - 18, cy - 110 + bounce, 12, 90 + legL_Y);
+                ctx.fillStyle = blueConfig.bootColor;
+                ctx.fillRect(cx - 20, cy - 20 + legL_Y, 16, 20);
+
+                ctx.fillStyle = blueConfig.pantsColor;
+                ctx.fillRect(cx + 6, cy - 110 + bounce, 12, 60 + legR_Y);
+                ctx.fillRect(cx + 6, cy - 50 + legR_Y, 12, 32);
+                ctx.fillStyle = blueConfig.bootColor;
+                ctx.fillRect(cx + 4, cy - 20 + legR_Y, 16, 20);
+            }
+
+            ctx.fillStyle = blueConfig.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 150 + bounce);
+            ctx.lineTo(cx + 22, cy - 150 + bounce);
+            ctx.lineTo(cx + 36, cy - 54 + bounce);
+            ctx.lineTo(cx - 36, cy - 54 + bounce);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = blueConfig.robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 150 + bounce);
+            ctx.lineTo(cx, cy - 145 + bounce);
+            ctx.lineTo(cx - 6, cy - 54 + bounce);
+            ctx.lineTo(cx - 36, cy - 54 + bounce);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = blueConfig.strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            let isLeftForward = (stepProgress > 0);
+            let isRightForward = (stepProgress < 0);
+
+            // Left Arm
+            ctx.fillStyle = blueConfig.robeShadow;
+            ctx.beginPath();
+            ctx.moveTo(cx - 22, cy - 146 + bounce);
+            if (isLeftForward) {
+                ctx.lineTo(cx - 48, cy - 105 + bounce + armL_Y);
+                ctx.lineTo(cx - 36, cy - 95 + bounce + armL_Y);
+            } else {
+                ctx.lineTo(cx - 38, cy - 102 + bounce + armL_Y);
+                ctx.lineTo(cx - 26, cy - 96 + bounce + armL_Y);
+            }
+            ctx.lineTo(cx - 22, cy - 120 + bounce);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Right Arm
+            ctx.fillStyle = blueConfig.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx + 22, cy - 146 + bounce);
+            if (isRightForward) {
+                ctx.lineTo(cx + 48, cy - 105 + bounce + armR_Y);
+                ctx.lineTo(cx + 36, cy - 95 + bounce + armR_Y);
+            } else {
+                ctx.lineTo(cx + 38, cy - 102 + bounce + armR_Y);
+                ctx.lineTo(cx + 26, cy - 96 + bounce + armR_Y);
+            }
+            ctx.lineTo(cx + 22, cy - 120 + bounce);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Left Hand
+            ctx.fillStyle = blueConfig.skinColor;
+            if (isLeftForward) {
+                ctx.beginPath();
+                ctx.moveTo(cx - 48, cy - 105 + bounce + armL_Y);
+                ctx.lineTo(cx - 54, cy - 98 + bounce + armL_Y);
+                ctx.lineTo(cx - 42, cy - 88 + bounce + armL_Y);
+                ctx.lineTo(cx - 36, cy - 95 + bounce + armL_Y);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(cx - 38, cy - 102 + bounce + armL_Y);
+                ctx.lineTo(cx - 42, cy - 95 + bounce + armL_Y);
+                ctx.lineTo(cx - 30, cy - 89 + bounce + armL_Y);
+                ctx.lineTo(cx - 26, cy - 96 + bounce + armL_Y);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Staff & Right Hand
+            let rhGripX = isRightForward ? cx + 42 : cx + 32;
+            let rhGripY = isRightForward ? cy - 92 + bounce + armR_Y : cy - 95 + bounce + armR_Y;
+            let staffAngle = isRightForward ? 0.16 : 0.05;
+
+            if (hasStaff) {
+                drawMagicStaff(ctx, rhGripX, rhGripY, staffAngle);
+            }
+
+            ctx.fillStyle = blueConfig.skinColor;
+            if (isRightForward) {
+                ctx.beginPath();
+                ctx.moveTo(cx + 48, cy - 105 + bounce + armR_Y);
+                ctx.lineTo(cx + 54, cy - 98 + bounce + armR_Y);
+                ctx.lineTo(cx + 42, cy - 88 + bounce + armR_Y);
+                ctx.lineTo(cx + 36, cy - 95 + bounce + armR_Y);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(cx + 38, cy - 102 + bounce + armR_Y);
+                ctx.lineTo(cx + 42, cy - 95 + bounce + armR_Y);
+                ctx.lineTo(cx + 30, cy - 89 + bounce + armR_Y);
+                ctx.lineTo(cx + 26, cy - 96 + bounce + armR_Y);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Head & Hat
+            ctx.fillStyle = blueConfig.neckColor;
+            ctx.fillRect(cx - 6, cy - 162 + bounce, 12, 14);
+            ctx.fillStyle = blueConfig.skinColor;
+            ctx.beginPath();
+            ctx.arc(cx, cy - 176 + bounce, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = blueConfig.headStroke;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            drawWizardHat(ctx, cx, (cy - 176 + bounce) - 22, 64, 58, 0);
+        }
+
+        function generateAllAssets() {
+            renderIdle('blue_robe', false);
+            renderIdle('blue_robe_staff', true);
+
+            assetDefinitions.walk.forEach(item => {
+                renderWalk(item.id, item.progress, item.hasStaff);
+            });
+
+            assetDefinitions.run.forEach(item => {
+                renderRun(item.id, item.progress, item.hasStaff);
+            });
+        }
+
+        function downloadAsset(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        window.onload = () => {
+            initUI();
+            generateAllAssets();
+        };
+    </script>
+</body>
+</html>

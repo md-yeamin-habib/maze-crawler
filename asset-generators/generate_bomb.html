@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Low-Poly Barrel Bomb Generator</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background-color: #0b0f19;
+            color: #f1f5f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 24px;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh;
+        }
+        h1 { color: #fbbf24; margin-bottom: 6px; font-size: 24px; text-align: center; }
+        p.subtitle { color: #94a3b8; margin-top: 0; margin-bottom: 24px; font-size: 14px; text-align: center; }
+        .app-container {
+            display: flex; gap: 32px; max-width: 950px; width: 100%;
+            justify-content: center; align-items: flex-start;
+        }
+        .controls-card {
+            background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+            padding: 24px; display: flex; flex-direction: column; gap: 20px;
+            width: 360px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .control-group { display: flex; flex-direction: column; gap: 8px; }
+        .control-group label {
+            font-size: 13px; font-weight: 600; color: #cbd5e1;
+            display: flex; justify-content: space-between;
+        }
+        input[type="range"] { width: 100%; accent-color: #f59e0b; cursor: pointer; }
+        .checkbox-group { display: flex; gap: 16px; }
+        .checkbox-item {
+            display: flex; align-items: center; gap: 8px; font-size: 13px;
+            color: #e2e8f0; cursor: pointer;
+        }
+        .checkbox-item input { accent-color: #f59e0b; width: 16px; height: 16px; cursor: pointer; }
+        .preset-title {
+            font-size: 13px; font-weight: bold; color: #fbbf24;
+            margin-top: 8px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-preset {
+            background: #334155; color: #f1f5f9; border: 1px solid #475569;
+            padding: 8px 10px; font-size: 11px; font-weight: 600; border-radius: 6px;
+            cursor: pointer; transition: all 0.2s ease; text-align: left;
+        }
+        .btn-preset:hover { background: #475569; border-color: #fbbf24; color: #fbbf24; }
+        .btn-main {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            color: #ffffff; border: 1px solid #f59e0b; padding: 12px;
+            font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer;
+            transition: all 0.2s ease; box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4); text-align: center;
+        }
+        .btn-main:hover { background: linear-gradient(135deg, #b45309, #78350f); transform: translateY(-1px); }
+        .preview-card {
+            background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+            padding: 20px; display: flex; flex-direction: column; align-items: center;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .canvas-container {
+            background: #090d16; border: 2px solid #475569; border-radius: 8px;
+            padding: 12px; margin-bottom: 16px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        canvas { display: block; border-radius: 4px; width: 250px; height: 500px; }
+    </style>
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <h1>💣 3D Low-Poly Barrel Bomb Generator</h1>
+    <p class="subtitle">1:2 Aspect Ratio | HD Canvas: 400px × 800px (Orthographic Isometric)</p>
+
+    <div class="app-container">
+        <!-- Control Panel -->
+        <div class="controls-card">
+            <div class="control-group">
+                <label>Wick Length <span id="wickVal">100%</span></label>
+                <input type="range" id="wickLength" min="0" max="100" value="100" oninput="updateBomb()">
+            </div>
+
+            <div class="checkbox-group">
+                <label class="checkbox-item">
+                    <input type="checkbox" id="hasFlame" checked onchange="updateBomb()">
+                    Spark / Flame
+                </label>
+                <label class="checkbox-item">
+                    <input type="checkbox" id="isWhiteFlash" onchange="updateBomb()">
+                    Solid White Flash
+                </label>
+            </div>
+
+            <div class="preset-title">Preset Asset Variants (6 Variants)</div>
+            <div class="preset-grid">
+                <button class="btn-preset" onclick="setPreset(100, false, false)">1. Full Unlit (100%)</button>
+                <button class="btn-preset" onclick="setPreset(100, true, false)">2. Full Lit (100%)</button>
+                <button class="btn-preset" onclick="setPreset(66, true, false)">3. 2/3 Lit (66%)</button>
+                <button class="btn-preset" onclick="setPreset(33, true, false)">4. 1/3 Lit (33%)</button>
+                <button class="btn-preset" onclick="setPreset(0, false, false)">5. No Wick (0%)</button>
+                <button class="btn-preset" onclick="setPreset(0, false, true)">6. White Flash</button>
+            </div>
+
+            <button class="btn-main" onclick="downloadCurrent()">💾 Download Current View PNG</button>
+            <button class="btn-main" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); border-color: #60a5fa;" onclick="batchExportAll()">📦 Batch Export All 6 Assets</button>
+        </div>
+
+        <!-- Preview Canvas -->
+        <div class="preview-card">
+            <div class="canvas-container">
+                <canvas id="bombCanvas" width="400" height="800"></canvas>
+            </div>
+            <span style="font-size: 12px; color: #94a3b8;">400px × 800px Canvas</span>
+        </div>
+    </div>
+
+    <script>
+        // Helper to create 2D Starburst Shape
+        function createStarShape(points, outerRadius, innerRadius) {
+            const shape = new THREE.Shape();
+            for (let i = 0; i < points * 2; i++) {
+                const r = (i % 2 === 0) ? outerRadius : innerRadius;
+                const a = (i / (points * 2)) * Math.PI * 2;
+                const x = Math.cos(a) * r;
+                const y = Math.sin(a) * r;
+                if (i === 0) shape.moveTo(x, y);
+                else shape.lineTo(x, y);
+            }
+            shape.closePath();
+            return shape;
+        }
+
+        function createBarrelMesh(wickPct, hasSpark, isWhite, camera) {
+            const group = new THREE.Group();
+
+            const getMat = (colorHex, roughness = 0.8) => {
+                if (isWhite) {
+                    return new THREE.MeshBasicMaterial({ color: 0xffffff });
+                }
+                return new THREE.MeshStandardMaterial({ 
+                    color: colorHex, 
+                    roughness: roughness,
+                    metalness: 0.1,
+                    flatShading: true 
+                });
+            };
+
+            // Natural Oak Wood Palette
+            const matWoodLight = getMat(0xc2782b, 0.7); // Warm Oak Main Body
+            const matWoodDark = getMat(0x5c2e0b, 0.9);  // Inner Lid Wood
+            const matIronMid = getMat(0x64748b, 0.4);   // Metallic Slate Iron Hoop
+            const matIronDark = getMat(0x334155, 0.5);  // Fuse Cap
+            const matWick = getMat(0xd4a373, 0.9);      // Braided Rope Wick
+
+            // 1. Faceted Low-Poly Barrel Body
+            const radiusTop = 0.95;
+            const radiusBottom = 0.85;
+            const height = 2.8;
+            const radialSegments = 12;
+
+            const barrelGeo = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments, 6);
+            const pos = barrelGeo.attributes.position;
+            
+            for (let i = 0; i < pos.count; i++) {
+                const y = pos.getY(i);
+                const ny = y / (height / 2);
+                const bulge = 1 + (1 - Math.pow(ny, 2)) * 0.38;
+                pos.setX(i, pos.getX(i) * bulge);
+                pos.setZ(i, pos.getZ(i) * bulge);
+            }
+            barrelGeo.computeVertexNormals();
+
+            const barrelMesh = new THREE.Mesh(barrelGeo, matWoodLight);
+            barrelMesh.position.y = height / 2;
+            group.add(barrelMesh);
+
+            // Clean Flat Top Surface with Outer Rim
+            const topCapGeo = new THREE.CylinderGeometry(radiusTop * 0.88, radiusTop * 0.88, 0.05, radialSegments);
+            const topCap = new THREE.Mesh(topCapGeo, matWoodDark);
+            topCap.position.y = height - 0.02;
+            group.add(topCap);
+
+            const rimGeo = new THREE.CylinderGeometry(radiusTop * 1.02, radiusTop * 0.92, 0.15, radialSegments, 1, true);
+            const rimMesh = new THREE.Mesh(rimGeo, matWoodLight);
+            rimMesh.position.y = height - 0.08;
+            group.add(rimMesh);
+
+            // 2. Iron Bands
+            const bandGeoTop = new THREE.CylinderGeometry(1.28, 1.32, 0.2, radialSegments);
+            const bandTop = new THREE.Mesh(bandGeoTop, matIronMid);
+            bandTop.position.y = height * 0.65;
+            group.add(bandTop);
+
+            const bandGeoBottom = new THREE.CylinderGeometry(1.22, 1.15, 0.2, radialSegments);
+            const bandBottom = new THREE.Mesh(bandGeoBottom, matIronMid);
+            bandBottom.position.y = height * 0.28;
+            group.add(bandBottom);
+
+            // Central Fuse Cap Plug
+            const plugGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.08, 8);
+            const plug = new THREE.Mesh(plugGeo, matIronDark);
+            plug.position.y = height;
+            group.add(plug);
+
+            // 3. Dynamic Curved Wick
+            if (wickPct > 0) {
+                const totalMaxHeight = 1.1;
+                const currentWickLen = (wickPct / 100) * totalMaxHeight;
+
+                const curvePoints = [];
+                const numPoints = 8;
+                for (let i = 0; i <= numPoints; i++) {
+                    const t = i / numPoints;
+                    const h = t * currentWickLen;
+                    const x = Math.sin(t * Math.PI * 0.9) * 0.3;
+                    const z = (1 - Math.cos(t * Math.PI * 0.6)) * 0.2;
+                    curvePoints.push(new THREE.Vector3(x, height + h, z));
+                }
+
+                const curve = new THREE.CatmullRomCurve3(curvePoints);
+                const tubeGeo = new THREE.TubeGeometry(curve, 12, 0.045, 6, false);
+                const wickMesh = new THREE.Mesh(tubeGeo, matWick);
+                group.add(wickMesh);
+
+                // 4. Sharp 2D Starburst Fuse Spark Billboard
+                if (hasSpark && !isWhite) {
+                    const sparkGroup = new THREE.Group();
+                    const tipPos = curvePoints[curvePoints.length - 1];
+                    sparkGroup.position.copy(tipPos);
+
+                    const matRed    = new THREE.MeshBasicMaterial({ color: 0xef4444, side: THREE.DoubleSide });
+                    const matOrange = new THREE.MeshBasicMaterial({ color: 0xf97316, side: THREE.DoubleSide });
+                    const matYellow = new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide });
+                    const matWhite  = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+
+                    // Outer Red 12-Point Starburst
+                    const star1Geo = new THREE.ShapeGeometry(createStarShape(12, 0.55, 0.22));
+                    const star1 = new THREE.Mesh(star1Geo, matRed);
+                    sparkGroup.add(star1);
+
+                    // Mid Orange Starburst
+                    const star2Geo = new THREE.ShapeGeometry(createStarShape(10, 0.42, 0.18));
+                    const star2 = new THREE.Mesh(star2Geo, matOrange);
+                    star2.rotation.z = Math.PI / 10;
+                    star2.position.z = 0.001;
+                    sparkGroup.add(star2);
+
+                    // Inner Yellow Starburst
+                    const star3Geo = new THREE.ShapeGeometry(createStarShape(8, 0.28, 0.12));
+                    const star3 = new THREE.Mesh(star3Geo, matYellow);
+                    star3.rotation.z = Math.PI / 6;
+                    star3.position.z = 0.002;
+                    sparkGroup.add(star3);
+
+                    // Bright White Core Disk
+                    const coreGeo = new THREE.CircleGeometry(0.09, 8);
+                    const core = new THREE.Mesh(coreGeo, matWhite);
+                    core.position.z = 0.003;
+                    sparkGroup.add(core);
+
+                    // Small Detached Spike Accents
+                    const accentCount = 6;
+                    for (let a = 0; a < accentCount; a++) {
+                        const angle = (a / accentCount) * Math.PI * 2;
+                        const dist = 0.65;
+                        const accentGeo = new THREE.ShapeGeometry(createStarShape(4, 0.08, 0.02));
+                        const accent = new THREE.Mesh(accentGeo, (a % 2 === 0 ? matYellow : matOrange));
+                        accent.position.set(Math.cos(angle) * dist, Math.sin(angle) * dist, 0.001);
+                        sparkGroup.add(accent);
+                    }
+
+                    // Face Camera Billboard Orientation
+                    sparkGroup.quaternion.copy(camera.quaternion);
+
+                    group.add(sparkGroup);
+                }
+            }
+
+            return group;
+        }
+
+        function updateBomb() {
+            const wickPct = parseInt(document.getElementById('wickLength').value);
+            const hasFlame = document.getElementById('hasFlame').checked;
+            const isWhiteFlash = document.getElementById('isWhiteFlash').checked;
+
+            document.getElementById('wickVal').innerText = wickPct + '%';
+
+            const canvas = document.getElementById('bombCanvas');
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+            renderer.setSize(400, 800);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            const scene = new THREE.Scene();
+
+            // Orthographic Camera for Isometric View
+            const d = 3.2;
+            const camera = new THREE.OrthographicCamera(-d / 2, d / 2, d, -d, 1, 1000);
+            camera.position.set(4, 3.2, 5);
+            camera.lookAt(0, 0.6, 0);
+
+            // Balanced Lighting Setup
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const mainLight = new THREE.DirectionalLight(0xfffaed, 0.75);
+            mainLight.position.set(5, 8, 5);
+            scene.add(mainLight);
+
+            const fillLight = new THREE.DirectionalLight(0x94a3b8, 0.35);
+            fillLight.position.set(-5, 3, -5);
+            scene.add(fillLight);
+
+            const barrelModel = createBarrelMesh(wickPct, hasFlame, isWhiteFlash, camera);
+            scene.add(barrelModel);
+
+            renderer.render(scene, camera);
+        }
+
+        function setPreset(wick, flame, flash) {
+            document.getElementById('wickLength').value = wick;
+            document.getElementById('hasFlame').checked = flame;
+            document.getElementById('isWhiteFlash').checked = flash;
+            updateBomb();
+        }
+
+        function downloadCurrent() {
+            const canvas = document.getElementById('bombCanvas');
+            const link = document.createElement('a');
+            link.download = 'barrel_bomb.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function batchExportAll() {
+            const presets = [
+                { name: 'barrel_bomb_unlit.png', wick: 100, flame: false, flash: false },
+                { name: 'barrel_bomb_lit_100.png', wick: 100, flame: true, flash: false },
+                { name: 'barrel_bomb_lit_66.png', wick: 66, flame: true, flash: false },
+                { name: 'barrel_bomb_lit_33.png', wick: 33, flame: true, flash: false },
+                { name: 'barrel_bomb_no_wick.png', wick: 0, flame: false, flash: false },
+                { name: 'barrel_bomb_white_flash.png', wick: 0, flame: false, flash: true }
+            ];
+
+            presets.forEach((p, idx) => {
+                setTimeout(() => {
+                    setPreset(p.wick, p.flame, p.flash);
+                    downloadCurrent();
+                }, idx * 350);
+            });
+        }
+
+        window.onload = updateBomb;
+    </script>
+</body>
+</html>

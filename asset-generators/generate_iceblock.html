@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frozen Glacial Ice Block Generator</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background-color: #060b14;
+            color: #f1f5f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 24px;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh;
+        }
+        h1 { color: #38bdf8; margin-bottom: 6px; font-size: 24px; text-shadow: 0 0 12px rgba(56,189,248,0.4); }
+        p.subtitle { color: #94a3b8; margin-top: 0; margin-bottom: 20px; font-size: 14px; }
+        
+        .controls-panel {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #7dd3fc;
+            font-weight: 600;
+        }
+
+        .slider-header span.val {
+            color: #38bdf8;
+            font-family: monospace;
+        }
+
+        input[type="range"] {
+            -webkit: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #1e293b;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(56,189,248,0.8);
+            transition: transform 0.1s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        .controls-top { display: flex; gap: 12px; justify-content: center; margin-top: 8px; }
+        
+        .btn-main {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: #ffffff; border: 1px solid #38bdf8;
+            padding: 10px 20px; font-size: 13px; font-weight: bold;
+            border-radius: 6px; cursor: pointer; transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+        }
+        .btn-main:hover { background: linear-gradient(135deg, #0369a1, #075985); transform: translateY(-1px); }
+
+        .grid { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; max-width: 900px; width: 100%; }
+        .card {
+            background: #0f172a; border: 1px solid #1e293b; border-radius: 12px;
+            padding: 20px; display: flex; flex-direction: column; align-items: center;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6); transition: transform 0.2s, border-color 0.2s;
+            width: 320px;
+        }
+        .card:hover { border-color: #38bdf8; }
+        .card h3 { margin: 0 0 14px 0; font-size: 15px; color: #7dd3fc; text-align: center; }
+        .canvas-container {
+            background: #020617; border: 2px solid #334155; border-radius: 8px;
+            padding: 8px; margin-bottom: 16px; display: flex; justify-content: center; align-items: center;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+        }
+        canvas { display: block; border-radius: 4px; }
+        .btn-card {
+            background: linear-gradient(135deg, #0369a1, #0284c7);
+            color: #f0f9ff; border: 1px solid #7dd3fc;
+            padding: 9px 16px; font-size: 12px; font-weight: bold;
+            border-radius: 6px; cursor: pointer; transition: all 0.2s ease; width: 100%;
+        }
+        .btn-card:hover { background: linear-gradient(135deg, #0284c7, #38bdf8); color: #ffffff; }
+    </style>
+</head>
+<body>
+
+    <h1>🧊 Interactive Frosted Ice Block Generator</h1>
+    <p class="subtitle">Fine-tune Hue, Saturation & Whiteness in real-time | Native 300px × 900px Canvas</p>
+
+    <div class="controls-panel">
+        <div class="slider-group">
+            <div class="slider-header">
+                <label for="hueSlider">Base Color Hue (Ice Cyan to Deep Blue)</label>
+                <span class="val" id="hueVal">198°</span>
+            </div>
+            <input type="range" id="hueSlider" min="180" max="220" value="198" oninput="updateControls()">
+        </div>
+
+        <div class="slider-group">
+            <div class="slider-header">
+                <label for="satSlider">Blue Saturation / Intensity</label>
+                <span class="val" id="satVal">55%</span>
+            </div>
+            <input type="range" id="satSlider" min="0" max="100" value="55" oninput="updateControls()">
+        </div>
+
+        <div class="slider-group">
+            <div class="slider-header">
+                <label for="whiteSlider">Whiteness / Frost Brightness</label>
+                <span class="val" id="whiteVal">65%</span>
+            </div>
+            <input type="range" id="whiteSlider" min="0" max="100" value="65" oninput="updateControls()">
+        </div>
+
+        <div class="controls-top">
+            <button class="btn-main" onclick="rollNewSeeds()">🎲 Re-Roll Crack Seeds</button>
+            <button class="btn-main" onclick="downloadAll()">💾 Download Both Textures</button>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>ice_block_regular.png</h3>
+            <div class="canvas-container">
+                <canvas id="ice_reg" width="300" height="900" style="width: 120px; height: 360px;"></canvas>
+            </div>
+            <button class="btn-card" onclick="downloadAsset('ice_reg', 'ice_block_regular.png')">Download PNG (300x900)</button>
+        </div>
+
+        <div class="card">
+            <h3>ice_block_cracked.png</h3>
+            <div class="canvas-container">
+                <canvas id="ice_crack" width="300" height="900" style="width: 120px; height: 360px;"></canvas>
+            </div>
+            <button class="btn-card" onclick="downloadAsset('ice_crack', 'ice_block_cracked.png')">Download PNG (300x900)</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSeed = 12345;
+
+        function createPRNG(seed) {
+            let s = seed % 2147483647;
+            if (s <= 0) s += 2147483646;
+            return function() {
+                s = (s * 16807) % 2147483647;
+                return (s - 1) / 2147483646;
+            };
+        }
+
+        function drawIceBlock(canvasId, seed, isCracked, hue, sat, white) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const rng = createPRNG(seed);
+
+            const W = 300;
+            const H = 900;
+            ctx.clearRect(0, 0, W, H);
+
+            // Convert white factor (0..1) and sat factor (0..1)
+            const wFactor = white / 100;
+            const sFactor = sat / 100;
+
+            // Compute background gradient stops dynamically
+            // Top: High lightness, lower saturation for frosted top surface
+            const topLightness = 85 + wFactor * 12;
+            const topSat = Math.min(100, sFactor * 40);
+            
+            // Mid: Balance hue/sat
+            const midLightness = 55 + wFactor * 25;
+            const midSat = sFactor * 75;
+
+            // Bottom: Deeper ice body
+            const botLightness = 30 + wFactor * 25;
+            const botSat = sFactor * 85;
+
+            let bgGrad = ctx.createLinearGradient(0, 0, W, H);
+            bgGrad.addColorStop(0, `hsl(${hue}, ${topSat}%, ${topLightness}%)`);
+            bgGrad.addColorStop(0.25, `hsl(${hue}, ${sFactor * 55}%, ${70 + wFactor * 15}%)`);
+            bgGrad.addColorStop(0.55, `hsl(${hue}, ${midSat}%, ${midLightness}%)`);
+            bgGrad.addColorStop(0.82, `hsl(${hue}, ${sFactor * 80}%, ${42 + wFactor * 20}%)`);
+            bgGrad.addColorStop(1, `hsl(${hue}, ${botSat}%, ${botLightness}%)`);
+            
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, W, H);
+
+            // 2. Translucent Internal Frost Sheets
+            const sheetOpacity = 0.2 + wFactor * 0.35;
+            for (let i = 0; i < 9; i++) {
+                ctx.save();
+                ctx.beginPath();
+                let startY = rng() * H;
+                ctx.moveTo(0, startY);
+                ctx.bezierCurveTo(
+                    W * 0.3, startY + (rng() - 0.5) * 110,
+                    W * 0.7, startY + (rng() - 0.5) * 110,
+                    W, startY + (rng() - 0.5) * 70
+                );
+                ctx.lineTo(W, H);
+                ctx.lineTo(0, H);
+                ctx.closePath();
+
+                let waveGrad = ctx.createLinearGradient(0, startY, W, startY + 200);
+                waveGrad.addColorStop(0, `rgba(255, 255, 255, ${sheetOpacity})`);
+                waveGrad.addColorStop(0.4, `hsla(${hue}, ${sFactor * 60}%, 85%, ${sheetOpacity * 0.6})`);
+                waveGrad.addColorStop(1, `hsla(${hue}, ${sFactor * 80}%, 40%, 0)`);
+                ctx.fillStyle = waveGrad;
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // 3. Crisp Frosted Glare & Refraction Bubbles
+            const glareAlpha = 0.25 + wFactor * 0.35;
+            for (let f = 0; f < 12; f++) {
+                let fx = rng() * W;
+                let fy = rng() * H;
+                let fr = 35 + rng() * 85;
+
+                let fGrad = ctx.createRadialGradient(fx, fy, 0, fx, fy, fr);
+                fGrad.addColorStop(0, `rgba(255, 255, 255, ${glareAlpha})`);
+                fGrad.addColorStop(0.45, `hsla(${hue}, ${sFactor * 50}%, 90%, ${glareAlpha * 0.4})`);
+                fGrad.addColorStop(1, `hsla(${hue}, ${sFactor * 70}%, 60%, 0)`);
+
+                ctx.fillStyle = fGrad;
+                ctx.beginPath();
+                ctx.arc(fx, fy, fr, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 4. Subtle Internal Ice Grain Lines & Stress Fractures
+            const lineAlpha = 0.25 + wFactor * 0.3;
+            for (let v = 0; v < 14; v++) {
+                let vx = rng() * W;
+                let vy = rng() * H;
+                ctx.beginPath();
+                ctx.moveTo(vx, vy);
+
+                let length = 35 + rng() * 100;
+                let angle = rng() * Math.PI * 2;
+                for (let step = 0; step < length; step += 6) {
+                    vx += Math.cos(angle) * 6 + (rng() - 0.5) * 3;
+                    vy += Math.sin(angle) * 6 + (rng() - 0.5) * 3;
+                    angle += (rng() - 0.5) * 0.32;
+                    ctx.lineTo(vx, vy);
+                }
+
+                ctx.strokeStyle = `rgba(255, 255, 255, ${lineAlpha})`;
+                ctx.lineWidth = 1.1;
+                ctx.stroke();
+            }
+
+            // 5. Jagged Impact Shatter Lines (Matching Hand-Drawn Reference)
+            if (isCracked) {
+                let centerX = W * 0.5 + (rng() - 0.5) * 20;
+                let centerY = H * 0.48 + (rng() - 0.5) * 50;
+
+                // Impact Point Frost Glow
+                let impactGrad = ctx.createRadialGradient(centerX, centerY, 1, centerX, centerY, 50);
+                impactGrad.addColorStop(0, 'rgba(255, 255, 255, 0.98)');
+                impactGrad.addColorStop(0.35, `hsla(${hue}, ${sFactor * 60}%, 90%, 0.7)`);
+                impactGrad.addColorStop(1, `hsla(${hue}, ${sFactor * 80}%, 50%, 0)`);
+                ctx.fillStyle = impactGrad;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 50, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw Jagged Branching Fracture Path
+                function drawJaggedBranch(startX, startY, targetAngle, totalLength, mainWidth, depth = 0) {
+                    let points = [{ x: startX, y: startY }];
+                    let currX = startX;
+                    let currY = startY;
+                    let angle = targetAngle;
+
+                    let stepLength = 11 + rng() * 9;
+                    let totalSteps = Math.floor(totalLength / stepLength);
+
+                    for (let s = 0; s < totalSteps; s++) {
+                        angle += (rng() - 0.5) * 0.85;
+                        currX += Math.cos(angle) * stepLength;
+                        currY += Math.sin(angle) * stepLength;
+
+                        if (currX < 8 || currX > W - 8 || currY < 8 || currY > H - 8) break;
+
+                        points.push({ x: currX, y: currY });
+
+                        if (depth < 2 && s > 2 && rng() < 0.28) {
+                            let sideAngle = angle + (rng() > 0.5 ? 1 : -1) * (0.6 + rng() * 0.5);
+                            drawJaggedBranch(currX, currY, sideAngle, totalLength * 0.52, mainWidth * 0.65, depth + 1);
+                        }
+                    }
+
+                    if (points.length < 2) return;
+
+                    // Deep Ice Shadow Accent
+                    ctx.beginPath();
+                    ctx.moveTo(points[0].x, points[0].y);
+                    for (let p = 1; p < points.length; p++) {
+                        ctx.lineTo(points[p].x, points[p].y);
+                    }
+                    ctx.strokeStyle = `hsla(${hue}, ${sFactor * 90}%, 25%, 0.7)`;
+                    ctx.lineWidth = mainWidth * 1.6;
+                    ctx.lineJoin = 'miter';
+                    ctx.stroke();
+
+                    // Crisp White Shatter Core
+                    ctx.beginPath();
+                    ctx.moveTo(points[0].x, points[0].y);
+                    for (let p = 1; p < points.length; p++) {
+                        ctx.lineTo(points[p].x, points[p].y);
+                    }
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = mainWidth;
+                    ctx.lineJoin = 'miter';
+                    ctx.stroke();
+                }
+
+                // Primary main fractures radiating outwards from central hit
+                const numMainBranches = 8 + Math.floor(rng() * 4);
+                for (let b = 0; b < numMainBranches; b++) {
+                    let baseAngle = (b / numMainBranches) * Math.PI * 2 + (rng() - 0.5) * 0.4;
+                    let branchLen = 125 + rng() * 235;
+                    drawJaggedBranch(centerX, centerY, baseAngle, branchLen, 1.8, 0);
+                }
+            }
+
+            // 6. Beveled Edge & Corner Glass Reflections
+            let bevelGrad = ctx.createLinearGradient(0, 0, W, H);
+            bevelGrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+            bevelGrad.addColorStop(0.5, `hsla(${hue}, ${sFactor * 50}%, 85%, 0.55)`);
+            bevelGrad.addColorStop(1, `hsla(${hue}, ${sFactor * 80}%, 35%, 0.7)`);
+
+            ctx.strokeStyle = bevelGrad;
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(1.5, 1.5, W - 3, H - 3);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(8, 8, 3, 0, Math.PI * 2);
+            ctx.arc(W - 8, 8, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function renderCurrent() {
+            const hue = parseInt(document.getElementById('hueSlider').value);
+            const sat = parseInt(document.getElementById('satSlider').value);
+            const white = parseInt(document.getElementById('whiteSlider').value);
+
+            document.getElementById('hueVal').textContent = hue + '°';
+            document.getElementById('satVal').textContent = sat + '%';
+            document.getElementById('whiteVal').textContent = white + '%';
+
+            drawIceBlock('ice_reg', currentSeed, false, hue, sat, white);
+            drawIceBlock('ice_crack', currentSeed + 777, true, hue, sat, white);
+        }
+
+        function updateControls() {
+            renderCurrent();
+        }
+
+        function rollNewSeeds() {
+            currentSeed = Math.floor(Math.random() * 100000);
+            renderCurrent();
+        }
+
+        function downloadAsset(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function downloadAll() {
+            downloadAsset('ice_reg', 'ice_block_regular.png');
+            setTimeout(() => {
+                downloadAsset('ice_crack', 'ice_block_cracked.png');
+            }, 300);
+        }
+
+        window.onload = renderCurrent;
+    </script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Low-Poly Wizard Player Generator (Clean Silhouette)</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #fef3c7;
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 { margin-bottom: 5px; }
+        .grid {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .card {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            width: 200px;
+        }
+        canvas {
+            background: transparent;
+            border: 1px dashed #475569;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        button {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🧙‍♂️ Low-Poly Wizard Player Generator</h2>
+    <p style="color: #94a3b8; margin-top: 0;">Tall 1.5x Model — Solid White Transformation Asset</p>
+
+    <div class="grid">
+        <!-- 1. GRAY ROBE IDLE -->
+        <div class="card">
+            <h3>Gray Robe (Level 1)</h3>
+            <canvas id="grayCanvas" width="256" height="256"></canvas>
+            <button onclick="downloadAsset('grayCanvas', 'player_gray_robe.png')">Download Gray Robe</button>
+        </div>
+
+        <!-- 2. INDIGO BLUE ROBE IDLE -->
+        <div class="card">
+            <h3>Indigo Robe (Ascended)</h3>
+            <canvas id="blueCanvas" width="256" height="256"></canvas>
+            <button onclick="downloadAsset('blueCanvas', 'player_blue_robe.png')">Download Indigo Robe</button>
+        </div>
+
+        <!-- 3. TRANSFORMING STATE (SOLID WHITE SILHOUETTE, NO LINES) -->
+        <div class="card">
+            <h3>Transforming (Solid White)</h3>
+            <canvas id="transformCanvas" width="256" height="256"></canvas>
+            <button onclick="downloadAsset('transformCanvas', 'player_transform.png')">Download Transform State</button>
+        </div>
+
+        <!-- 4. SWIMMING IDLE (EXTENDING POSE) -->
+        <div class="card">
+            <h3>Swim Idle (Extended)</h3>
+            <canvas id="swimCanvas" width="256" height="256"></canvas>
+            <button onclick="downloadAsset('swimCanvas', 'player_swim_idle_ext.png')">Download Swim Frame</button>
+        </div>
+    </div>
+
+    <script>
+        function drawWizardBase(ctx, w, h, config) {
+            ctx.clearRect(0, 0, w, h);
+            const cx = w / 2;
+            const cy = h / 2 + 105;
+
+            let legOut = config.isSwimming ? 8 : 0;
+            let armUp = config.isSwimming ? 18 : 0;
+
+            // --- 1. LEGS & BOOTS ---
+            ctx.fillStyle = config.pantsColor;
+            // Left Leg
+            ctx.fillRect(cx - 18 - legOut, cy - 58, 12, 38);
+            // Right Leg
+            ctx.fillRect(cx + 6 + legOut, cy - 58, 12, 38);
+
+            // Left Shoe/Boot
+            ctx.fillStyle = config.bootColor;
+            ctx.fillRect(cx - 20 - legOut, cy - 20, 16, 20);
+            // Right Shoe/Boot
+            ctx.fillRect(cx + 4 + legOut, cy - 20, 16, 20);
+
+            // --- 2. ROBE BODY ---
+            ctx.fillStyle = config.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx - 18, cy - 150);
+            ctx.lineTo(cx + 18, cy - 150);
+            ctx.lineTo(cx + 34 + (legOut * 0.5), cy - 54);
+            ctx.lineTo(cx - 34 - (legOut * 0.5), cy - 54);
+            ctx.closePath();
+            ctx.fill();
+
+            // Shadow fold (skipped if solid white transform)
+            if (config.robeShadow) {
+                ctx.fillStyle = config.robeShadow;
+                ctx.beginPath();
+                ctx.moveTo(cx - 18, cy - 150);
+                ctx.lineTo(cx, cy - 145);
+                ctx.lineTo(cx - 6, cy - 54);
+                ctx.lineTo(cx - 34 - (legOut * 0.5), cy - 54);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            if (config.strokeColor) {
+                ctx.strokeStyle = config.strokeColor;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+
+            // --- 3. SLEEVES & ARMS ---
+            // Left Sleeve
+            ctx.fillStyle = config.sleeveLeftColor || config.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx - 18, cy - 146);
+            ctx.lineTo(cx - 64, cy - 132 - armUp);
+            ctx.lineTo(cx - 54, cy - 114 - armUp);
+            ctx.lineTo(cx - 20, cy - 126);
+            ctx.closePath();
+            ctx.fill();
+            if (config.strokeColor) ctx.stroke();
+
+            // Right Sleeve
+            ctx.fillStyle = config.robeMain;
+            ctx.beginPath();
+            ctx.moveTo(cx + 18, cy - 146);
+            ctx.lineTo(cx + 64, cy - 132 - armUp);
+            ctx.lineTo(cx + 54, cy - 114 - armUp);
+            ctx.lineTo(cx + 20, cy - 126);
+            ctx.closePath();
+            ctx.fill();
+            if (config.strokeColor) ctx.stroke();
+
+            // Hands (Skin Blocks)
+            ctx.fillStyle = config.skinColor;
+            ctx.fillRect(cx - 70, cy - 132 - armUp, 8, 16);
+            ctx.fillRect(cx + 62, cy - 132 - armUp, 8, 16);
+
+            // --- 4. NECK & HEAD ---
+            ctx.fillStyle = config.neckColor;
+            ctx.fillRect(cx - 6, cy - 162, 12, 14);
+
+            ctx.fillStyle = config.headColor || config.skinColor;
+            ctx.beginPath();
+            ctx.arc(cx, cy - 176, 18, 0, Math.PI * 2);
+            ctx.fill();
+            
+            if (config.headStroke) {
+                ctx.strokeStyle = config.headStroke;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
+
+        // 1. Gray Robe Idle
+        drawWizardBase(document.getElementById('grayCanvas').getContext('2d'), 256, 256, {
+            robeMain: '#64748b', robeShadow: '#475569', pantsColor: '#334155', bootColor: '#0f172a',
+            skinColor: '#ffedd5', neckColor: '#e2e8f0', strokeColor: '#0f172a', headStroke: '#cbd5e1'
+        });
+
+        // 2. Indigo Blue Robe Idle
+        drawWizardBase(document.getElementById('blueCanvas').getContext('2d'), 256, 256, {
+            robeMain: '#312e81', robeShadow: '#3730a3', pantsColor: '#1e1b4b', bootColor: '#0f172a',
+            skinColor: '#ffedd5', neckColor: '#e2e8f0', strokeColor: '#0f172a', headStroke: '#cbd5e1'
+        });
+
+        // 3. Transforming Solid White (Zero strokes, completely white silhouette)
+        drawWizardBase(document.getElementById('transformCanvas').getContext('2d'), 256, 256, {
+            robeMain: '#ffffff', robeShadow: null, pantsColor: '#ffffff', bootColor: '#ffffff',
+            skinColor: '#ffffff', neckColor: '#ffffff', headColor: '#ffffff',
+            strokeColor: null, headStroke: null
+        });
+
+        // 4. Swim Idle (Extended pose for 2-frame loop with Indigo Robe)
+        drawWizardBase(document.getElementById('swimCanvas').getContext('2d'), 256, 256, {
+            robeMain: '#312e81', robeShadow: '#3730a3', pantsColor: '#1e1b4b', bootColor: '#0f172a',
+            skinColor: '#ffedd5', neckColor: '#e2e8f0', strokeColor: '#0f172a', headStroke: '#cbd5e1',
+            isSwimming: true
+        });
+
+        function downloadAsset(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+
+</body>
+</html>
