@@ -1,2 +1,5 @@
 Flask
+pywebview
+pyinstaller
 gunicorn
+Pillow

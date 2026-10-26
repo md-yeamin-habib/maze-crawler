@@ -1,26 +1,23 @@
-# Byte-compiled / Python cache files
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Environments
-.venv/
-env/
 venv/
+env/
 ENV/
+.venv/
 
-# Local database / local user state
+build/
+dist/
+*.spec
+
+installer_output/
+
 high_scores.json
 
-# Operating System & Editor Files
 .DS_Store
 Thumbs.db
 desktop.ini
-
-# IDE & Editor files
 .vscode/
 .idea/
-*.swp
-
-# Logs
 *.log

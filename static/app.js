@@ -3041,7 +3041,7 @@ function updateMinotaurs() {
         } else {
             // OUTBOUND: Pick a random static target once, then use BFS to walk to it
             if (!minotaur.outboundTarget || (minotaur.r === minotaur.outboundTarget.r && minotaur.c === minotaur.outboundTarget.c)) {
-                minotaur.outboundTarget = getRandomPassableTileWithinSteps(minotaur.spawnR, minotaur.spawnC, 50);
+                minotaur.outboundTarget = getRandomPassableTileWithinSteps(minotaur.spawnR, minotaur.spawnC, 35);
             }
 
             let nextStep = getNextOrthogonalStep(minotaur.r, minotaur.c, minotaur.outboundTarget.r, minotaur.outboundTarget.c);

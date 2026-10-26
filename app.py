@@ -7,7 +7,13 @@ app = Flask(__name__, static_folder='static', static_url_path='')
 
 MAZES_PATH = os.path.join(os.path.dirname(__file__), 'mazes.json')
 
-HIGH_SCORES_PATH = os.path.join(os.path.dirname(__file__), 'high_scores.json')
+if os.name == 'nt':
+    app_data_dir = os.path.join(os.getenv('APPDATA', os.path.expanduser('~')), 'MazeCrawler')
+else:
+    app_data_dir = os.path.join(os.path.expanduser('~'), '.mazecrawler')
+
+os.makedirs(app_data_dir, exist_ok=True)
+HIGH_SCORES_PATH = os.path.join(app_data_dir, 'high_scores.json')
 
 def load_mazes():
     """Loads maze layouts from the external JSON configuration file."""
